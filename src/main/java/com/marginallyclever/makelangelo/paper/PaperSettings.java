@@ -18,7 +18,7 @@ import com.marginallyclever.util.PreferencesHelper;
 public class PaperSettings extends SelectPanel {
 	private static final long serialVersionUID = 2824594482225714527L;
 
-	private static PaperSize commonPaperSizes [] = {
+	protected static PaperSize commonPaperSizes [] = {
 		new PaperSize("4A0",1682,2378),
 		new PaperSize("2A0",1189,1682),
 		new PaperSize("A0",841,1189),
@@ -157,7 +157,7 @@ public class PaperSettings extends SelectPanel {
 	/**
 	 * @return the value displayed on the panel
 	 */
-	private double getPaperWidthFromPanel() {
+	protected double getPaperWidthFromPanel() {
 		double w=0;
 		try {
 			w = ((Number)pw.getValue()).doubleValue();
@@ -170,7 +170,7 @@ public class PaperSettings extends SelectPanel {
 	/**
 	 * @return the value displayed on the panel
 	 */
-	private double getPaperHeightFromPanel() {
+	protected double getPaperHeightFromPanel() {
 		double h=0;
 		try {
 			h = ((Number)ph.getValue()).doubleValue();
