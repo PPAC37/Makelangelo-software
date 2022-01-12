@@ -799,6 +799,11 @@ public final class Makelangelo {
 			mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 			saveWindowSizeAndPosition();
 			myPlotter.getSettings().saveConfig();
+			
+			// Dev tools for traduction ( writing a pre formated file .xml with the squeleton for the missing keys ...)
+			// Writing missing key .xml ( TODO only is argument flag like -missingtrduction , or env varibla DEV=true or ...
+			// TODO output file path ...
+			Translator.writeMissingKeyXmlFile();
 
 			// Log.end() should be the very last call.  mainFrame.dispose() kills the thread, so this is as close as I can get.
 			Log.end();

@@ -219,6 +219,10 @@ public final class Translator {
 	public static String get(String key) {
 		return languages.get(currentLanguage).get(key);
 	}
+	
+	public static void writeMissingKeyXmlFile(){
+	    languages.get(currentLanguage).generateParialXmlFileWithMissingKey();
+	}
 
 	/**
 	 * Translates a string and fills in some details.  String contains the special character sequence "%N", where N is the n-th parameter passed to get()
