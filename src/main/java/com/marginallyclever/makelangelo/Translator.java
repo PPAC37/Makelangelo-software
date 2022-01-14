@@ -179,6 +179,63 @@ public final class Translator {
 	}
 
 
+	/**
+	 * TODO To REVIEW : Seem to try to load all .xml file found ( to avoid loading non language related files, .xml language file should have a patern a the end of the filename like "_en.xml" or "_fr_FR.xml" ( _<CodeLang>[_<ContryCode>]).xml easyly matchable with a regexp ...) .
+	 * <br>
+	 * TODO to REVIEW : .xml DOCTYPE language  sould have a DTD to be validable ...
+	 * <br>
+	 * TODO to REVIEW : Currently if the user have a .xml file in PWD (WORKING_DIRECTORY) it will errase all values from a posible ( in the jar ) .xml ... (should notifiy of this )
+	 * <br>
+	 * TODO to REVIEW : Can we do a sort of Key history ( for the rename case ) (in version XYZ you have key "Shift" and in version XYZ+1 it becom "Paper.Shift" )
+	 * <br>
+	 * TODO to review : Unique Key is not currently assert in the .xml file as the key is not and id ( and as we map.put(key,val) (only the last val remain) (should be notifiy )
+	 * 
+	 * 
+				From this : 
+				<code>
+				<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE language [
+
+<!ELEMENT language (meta,string+)>
+
+<!ELEMENT meta (name,author)>
+<!ELEMENT name (#PCDATA)>
+<!ELEMENT author (#PCDATA)>
+<!ELEMENT string (key,value,hint?)>
+<!ELEMENT key (#PCDATA)>				
+<!ELEMENT value (#PCDATA)>
+<!ELEMENT hint (#PCDATA)>
+]>
+</code>
+				
+				To this (but imply a review of the .xml format / read and write implementation ... as the key element should be migrated as a attribut id of each string tag ...)
+		<code>
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE language [
+
+<!ELEMENT language (meta,string+)>
+<!ATTLIST language   xml:lang NMTOKEN 'en'>
+
+<!ELEMENT meta (name,author)>
+<!ELEMENT name (#PCDATA)>
+<!ELEMENT author (#PCDATA)>
+<!ELEMENT string (value,hint?)>
+
+<!ATTLIST string id ID #IMPLIED>
+<!ELEMENT value (#PCDATA)>
+<!ELEMENT hint (#PCDATA)>
+]>		
+			</code>	
+				
+	 * 
+	 * <br>
+	 * TODO to Review : Find an essay way to auto / colaborative traduction knowledg base. ( have a tools / front application to modifiy traductions ( so a user can't mess the XML / have a key renaming history / have tools to validate the xml / have version and propose a batch of traductions with version ...)
+	 * <br>
+	 * 
+	 * @param name
+	 * @return
+	 * @throws Exception 
+	 */
 	private static boolean attemptToLoadLanguageXML(String name) throws Exception {
 		String nameInsideJar = WORKING_DIRECTORY+"/"+FilenameUtils.getName(name);
 		InputStream stream = Translator.class.getClassLoader().getResourceAsStream(nameInsideJar);
@@ -190,12 +247,14 @@ public final class Translator {
 		}
 		if( stream == null ) return false;
 		
-		logger.trace("Found {}", actualFilename);
+		logger.debug("Found {}", actualFilename); // was a trace set as debug by PPAC37 to review some issues.
 		TranslatorLanguage lang = new TranslatorLanguage();
 		try {
 			lang.loadFromInputStream(stream);
+			logger.debug("Found {} // {} ", actualFilename,lang.getName()); // currenty a english.xml can have a language name value "dutch" ... this is disturbing not to be aware of that.
 		} catch(Exception e) {
 			logger.error("Failed to load {}", actualFilename);
+			e.printStackTrace();// added by PPAC37. TODO should be remove after having review some issues.
 			// if the xml file is invalid then an exception can occur.
 			// make sure lang is empty in case of a partial-load failure.
 			lang = new TranslatorLanguage();
@@ -204,6 +263,13 @@ public final class Translator {
 		if( !lang.getName().isEmpty() && 
 			!lang.getAuthor().isEmpty()) {
 			// we loaded a language file that seems pretty legit.
+			if ( languages.containsKey(lang.getName())){
+			    // So ... what ... lets overwirte it ?
+			    // TODO maybe fusion it ? 
+			    // But at least warm the user ?
+			        logger.debug(String.format("SAME language Name \"%s\" ... using last one ...",lang.getName()));
+				
+			}
 			languages.put(lang.getName(), lang);
 			return true;
 		}

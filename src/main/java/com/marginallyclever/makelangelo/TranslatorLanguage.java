@@ -94,7 +94,20 @@ public class TranslatorLanguage {
 				String value = getTextValue(el, XML_TAG_VALUE);
 
 				// store key/value pairs into a map
-				//logger.debug(language_file +"\t"+key+"\t=\t"+value);
+				//logger.debug(language_file +"\t"+key+"\t=\t"+value);// KO language_file no in this scoop
+				
+				if ( strings.containsKey(key)){
+				    // This sould not occure.
+				    // TO REVIEW : this is due to the fact that the xml is manualy edited.
+				    // so ther is posibly multiple identical Key (that should be unique ).
+				//Key Unicity can be done with xml validation ... but this mean using the key as an id attribut 
+				//and adding a DTD to do .xml language DOCTYPE validation.
+				
+				// but in xml id value have some limitation (should be a NCName ... )
+				
+				    // ? ligne / pos in the file / stream ?
+				    logger.debug(String.format("SAME Key \"%s\" new value \"%s\" old value \"%s\"",key,value,strings.get(key)));
+				}
 				strings.put(key, value);
 			}
 		}
