@@ -9,7 +9,7 @@
 <!ELEMENT name (#PCDATA)>
 <!ELEMENT author (#PCDATA)>
 
-<!ELEMENT string (key,value,hint?)> <!-- remove the ? at the and of "hint?" to have validation issue for the <string> that do not containe a <hint>  -->
+<!ELEMENT string (key,value,hint)> <!-- remove the ? at the and of "hint?" to have validation issue for the <string> that do not containe a <hint>  -->
 
 <!ELEMENT key (#PCDATA)> <!-- 
 // TODO to reveiw for key unicity, migrate the elements as and attribut id of the <strnig> elements

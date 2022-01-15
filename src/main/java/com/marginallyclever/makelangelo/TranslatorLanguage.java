@@ -29,7 +29,11 @@ import org.w3c.dom.Comment;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
+import org.xml.sax.EntityResolver;
+import org.xml.sax.ErrorHandler;
+import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
 
 public class TranslatorLanguage {
 
@@ -67,10 +71,21 @@ public class TranslatorLanguage {
 	 */
 	public void loadFromInputStream(InputStream inputStream) {
 		final DocumentBuilder db = getDocumentBuilder();
+		
 		if (db == null) {
 			return;
 		}
 		try {
+		    // TODO how do i specife the dtd path if in the jar ? as it s
+		    //https://stackoverflow.com/questions/8699620/how-to-validate-xml-with-dtd-using-java
+//			db.setEntityResolver(new EntityResolver() {
+//			@Override
+//			public InputSource resolveEntity(String string, String string1) throws SAXException, IOException {
+//			    logger.debug(String.format("TODO : resolveEntity (\"%s\",\"%s\");",string,string1));
+//			    throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
+//			}
+//			});
+		    
 			Document dom = db.parse(inputStream);
 			load(dom);
 		} catch (SAXException | IOException e) {
@@ -81,6 +96,7 @@ public class TranslatorLanguage {
 	private void load(Document dom) {
 		final Element docEle = dom.getDocumentElement();
 
+		// PPAC37 : so we have read the file ( xml well formed validated) and as we do not use DTD the current kind of validation is non exception throw ( java.lang.NullPointerException )
 		name = docEle.getElementsByTagName(XML_TAG_NAME).item(0).getFirstChild().getNodeValue();
 		author = docEle.getElementsByTagName(XML_TAG_AUTHOR).item(0).getFirstChild().getNodeValue();
 
@@ -106,7 +122,12 @@ public class TranslatorLanguage {
 				// but in xml id value have some limitation (should be a NCName ... )
 				
 				    // ? ligne / pos in the file / stream ?
-				    logger.debug(String.format("SAME Key \"%s\" new value \"%s\" old value \"%s\"",key,value,strings.get(key)));
+				    
+				    if ( value.equals(strings.get(key))){
+					logger.debug(String.format("SAME Key SAME value key:\"%s\" value:\"%s\"",key,value));
+				    }else{
+					logger.error(String.format("SAME Key DIFF value key:\"%s\" value:\"%s\" oldvalue:\"%s\"",key,value,strings.get(key)));
+				    }
 				}
 				strings.put(key, value);
 			}
@@ -123,10 +144,38 @@ public class TranslatorLanguage {
 	public static final String XML_TAG_HINT = "hint";
     
 
+	boolean xmlValidation = true; // so if a xml have no DTD this wil throw a lot of exceptions ...
+	
 	private DocumentBuilder getDocumentBuilder() {
 		DocumentBuilder db = null;
 		try {
-			db = buildDocumentBuilder().newDocumentBuilder();
+		    final DocumentBuilderFactory domFactory = buildDocumentBuilder();
+			if ( xmlValidation){
+			    domFactory.setValidating(true);
+			}
+		    
+			
+			db = domFactory.newDocumentBuilder();
+			   if (xmlValidation) {
+				db.setErrorHandler(new ErrorHandler() {
+				    @Override
+				    public void error(SAXParseException exception) throws SAXException {
+					// do something more useful in each of these handlers
+					exception.printStackTrace();
+				    }
+
+				    @Override
+				    public void fatalError(SAXParseException exception) throws SAXException {
+					exception.printStackTrace();
+				    }
+
+				    @Override
+				    public void warning(SAXParseException exception) throws SAXException {
+					exception.printStackTrace();
+				    }
+				});
+			}
+			
 		} catch (ParserConfigurationException e) {
 			logger.error("Failed to create a new document", e);
 		}
@@ -155,7 +204,7 @@ public class TranslatorLanguage {
 	 * https://mkyong.com/java/how-to-create-xml-file-in-java-dom/
 	 *
 	 */
-	public void generateParialXmlFileWithMissingKey() {
+	public void generatePartialXmlFileWithMissingKey() {
 	    try {
 		//FileWriter fw = new FileWriter("missing_language.xml");
 		Iterator<String> it = missingKeys.iterator();

@@ -287,7 +287,7 @@ public final class Translator {
 	}
 	
 	public static void writeMissingKeyXmlFile(){
-	    languages.get(currentLanguage).generateParialXmlFileWithMissingKey();
+	    languages.get(currentLanguage).generatePartialXmlFileWithMissingKey();
 	}
 
 	/**
