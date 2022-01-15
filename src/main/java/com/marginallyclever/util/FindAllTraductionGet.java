@@ -17,11 +17,21 @@
  */
 package com.marginallyclever.util;
 
+import com.marginallyclever.convenience.CommandLineOptions;
+import com.marginallyclever.convenience.log.Log;
+import com.marginallyclever.makelangelo.Makelangelo;
+import com.marginallyclever.makelangelo.Translator;
+import com.marginallyclever.makelangelo.firmwareUploader.FirmwareUploader;
+import com.marginallyclever.makelangelo.makelangeloSettingsPanel.LanguagePreferences;
+import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -30,15 +40,29 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.swing.JFrame;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import org.slf4j.LoggerFactory;
 
 /**
- * A Try to find in the source code the Tratuction keys ...
+ * A Try to find in the source code the Tratuction keys used ...
  *
  *
  * @author q6
  */
 public class FindAllTraductionGet {
 
+    private static final org.slf4j.Logger logger = LoggerFactory.getLogger(FindAllTraductionGet.class);
+
+    private static Map<FindAllTraductionResult,Path> mapMatchResultToFilePath = new HashMap<>();
+
+    public static Map<FindAllTraductionResult, Path> getMapMatchResultToFilePath() {
+	return mapMatchResultToFilePath;
+    }
+    
+    
+    
     /**
      * Try to search a src java project for a specifik pattern ( like
      * Traduction.get(...) )
@@ -47,7 +71,23 @@ public class FindAllTraductionGet {
      */
     public static void main(String[] args) {
 
+	Log.start();
+		// lazy init to be able to purge old files
+		//logger = LoggerFactory.getLogger(Makelangelo.class);
+
+		PreferencesHelper.start();
+		CommandLineOptions.setFromMain(args);
+		Translator.start();
+
+		if(Translator.isThisTheFirstTimeLoadingLanguageFiles()) {
+			LanguagePreferences.chooseLanguage();
+		}
 	try {
+	    // TODO arg 0 as dirToSearch 
+	    if ( args != null &&  args.length > 0){
+		//
+		
+	    }
 	    String baseDirToSearch = "src" + File.separator + "main" + File.separator + "java";
 	    System.out.printf("PDW=%s\n", new File(".").getAbsolutePath());
 	    File srcDir = new File(".", baseDirToSearch);
@@ -65,16 +105,35 @@ public class FindAllTraductionGet {
 	    Logger.getLogger(FindAllTraductionGet.class.getName()).log(Level.SEVERE, null, ex);
 	}
 
-	System.out.printf("totalMatchCountInAllFiles=%d\n", totalMatchCountInAllFiles);
+	System.out.printf("totalMatchCountInAllFiles      =%d\n", totalMatchCountInAllFiles);
+	System.out.printf("totalMatchCountInAllFilesV0    =%d\n", totalMatchCountInAllFilesV0);
+	System.out.printf("mapMatchResultToFilePath.size()=%d\n", mapMatchResultToFilePath.size()
+	);
+	
+	
+	JFrame jf = new JFrame();
+	jf.setLayout(new BorderLayout());
+	JTable jtab = new JTable(new FindAllTraductionGetTableModel());
+	jtab.setAutoCreateRowSorter(true);
+	JScrollPane jsp = new JScrollPane();
+	jsp.setViewportView(jtab);
+	jf.getContentPane().add(jsp,BorderLayout.CENTER);
+	jf.setMinimumSize(new Dimension(800, 600));
+	jf.pack();
+	jf.setVisible(true);
+	jf.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+	
     }
 
     private static int totalMatchCountInAllFiles = 0;
+    private static int totalMatchCountInAllFilesV0 = 0;
     private static boolean debugPaser = false;
 
     /**
-     * line by line scanner then token matcher ... TODO if i have a multiline ?
+     * line by line scanner then token matcher ...TODO if i have a multiline ?
      *
      * @param x
+     * @param baseDir only to relativize output path
      */
     public static int searchAFile(Path x, Path baseDir) {
 	int totalMatchCount = 0;
@@ -94,12 +153,32 @@ public class FindAllTraductionGet {
 	    Pattern patternS1 = Pattern.compile(patternString1);
 
 	    // not line by line ... 
+//	    try ( Scanner sc = new Scanner(x)) {
+//		Pattern pat = Pattern.compile(patternString1);
+//		List<String> n = sc.findAll(pat)
+//			.map(MatchResult::group)
+//			.collect(Collectors.toList());
+//		if ( n.size()>0){
+//		    System.out.printf("::%d\n", n.size());
+//		    for ( String s : n){
+//			System.out.printf(" %s\n", s);
+//		    }
+//		}
+//		
+//	    }
 	    try ( Scanner sc = new Scanner(x)) {
 		Pattern pat = Pattern.compile(patternString1);
-		List<String> n = sc.findAll(pat)
-			.map(MatchResult::group)
+		List<MatchResult> n = sc.findAll(pat)
+			//.map(MatchResult)
 			.collect(Collectors.toList());
-		System.out.printf("::%d\n", n.size());
+		if (n.size() > 0) {
+		    System.out.printf("::%d in %s\n", n.size(), x.toAbsolutePath());
+		    for (MatchResult mr : n) {
+			totalMatchCountInAllFilesV0++;
+			System.out.printf(" %-50s in %s at sart:%d end:%d\n", mr.group(1), mr.group(), mr.start(), mr.end());
+		    }
+		}
+
 	    }
 
 	    // line by line ( this can miss some ... )
@@ -109,20 +188,24 @@ public class FindAllTraductionGet {
 		lineNum++;
 		String nextToken = scanner.nextLine();
 
-		Matcher matcherPatS1 = patternS1.matcher(nextToken);
+		Matcher m = patternS1.matcher(nextToken);
 
 		int matchCount = 0;
-		while (matcherPatS1.find()) {
+		while (m.find()) {
 		    totalMatchCountInAllFiles++;
 		    totalMatchCount++;
 		    matchCount++;
 		    if (debugPaser) {
-			System.out.println("#found: " + matcherPatS1.group(0));
+			System.out.println("#found: " + m.group(0));
 			System.out.flush();
-			System.out.println("#found gp count : " + matcherPatS1.groupCount());
+			System.out.println("#found gp count : " + m.groupCount());
 			System.out.flush();
 		    }
-		    System.out.printf("\tat %s(:%d)\n%s\n", baseDir.relativize(x), lineNum, matcherPatS1.group(1));
+		    if (false) {
+			System.out.printf("%s\n\tat %s(l:%d c:%d)\n", m.group(1), baseDir.relativize(x), lineNum, m.start(1));
+		    }
+		    FindAllTraductionResult res = new FindAllTraductionResult(m.group(1), lineNum, m.start(1), x);
+		    mapMatchResultToFilePath.put(res, x);
 		    //
 		}
 	    }
@@ -133,9 +216,11 @@ public class FindAllTraductionGet {
     }
 
     /**
-     * List all file in this path.Using <code>Files.walk(path)</code> (so this
+     * List all file in this path. Using <code>Files.walk(path)</code> (so this
      * take care of recursive path exploration ) And applying filter (
-     * RegularFile and ReadableFile ) and filterring FileName ...
+     * RegularFile and ReadableFile ) and filterring FileName ... TODO : a
+     * better/more efficient way ? ( im not familiare with the usage of walk
+     * (filter organisation) and the cumultation/collect ...
      *
      * @param path
      * @param fileNameEndsWithSuffix use ".java" to get only ...
