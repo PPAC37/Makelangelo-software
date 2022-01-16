@@ -19,9 +19,7 @@ package com.marginallyclever.util;
 
 import com.marginallyclever.convenience.CommandLineOptions;
 import com.marginallyclever.convenience.log.Log;
-import com.marginallyclever.makelangelo.Makelangelo;
 import com.marginallyclever.makelangelo.Translator;
-import com.marginallyclever.makelangelo.firmwareUploader.FirmwareUploader;
 import com.marginallyclever.makelangelo.makelangeloSettingsPanel.LanguagePreferences;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
@@ -49,7 +47,7 @@ import org.slf4j.LoggerFactory;
  * A Try to find in the source code the Tratuction keys used ...
  *
  *
- * @author q6
+ * @author PPAC37
  */
 public class FindAllTraductionGet {
 
@@ -223,13 +221,13 @@ public class FindAllTraductionGet {
      * (filter organisation) and the cumultation/collect ...
      *
      * @param path
-     * @param fileNameEndsWithSuffix use ".java" to get only ...
+     * @param fileNameEndsWithSuffix use ".java" to get only ... ( this is not a regexp so no '.' despecialisation needed )
      * @return
      * @throws IOException
      */
     public static List<Path> listFiles(Path path, String fileNameEndsWithSuffix) throws IOException {
 
-	List<Path> result;
+	List<Path> result = null;
 	try ( Stream<Path> walk = Files.walk(path)) {
 	    result = walk
 		    .filter(Files::isRegularFile)
@@ -238,6 +236,13 @@ public class FindAllTraductionGet {
 		    .filter(f -> f.getName().endsWith(fileNameEndsWithSuffix))
 		    .map(File::toPath)
 		    .collect(Collectors.toList());
+	}
+	if (debugPaser || true ){
+	    if ( result == null){
+				System.out.printf("listFiles (%s, \"%s\").size()=null\n", path,fileNameEndsWithSuffix);
+	    }else{
+		System.out.printf("listFiles (%s, \"%s\").size()=%d\n", path,fileNameEndsWithSuffix,result.size());
+	    }
 	}
 	return result;
 

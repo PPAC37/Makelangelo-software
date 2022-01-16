@@ -39,7 +39,7 @@ public class FindAllTraductionGetTableModel implements TableModel {
     final static String COL_KEY_LINE = "Line";
     final static String COL_KEY_FILE_NAME = "FileName";
     final static String COL_KEY_ARGS_TRADUCTED = "Traduction";
-    // SPECIAL CASE ( implemented as negative colIndex to hide this to the user but to have a way to get the object used at the row ... )
+    // SPECIAL CASE ( todo to implemente as negative colIndex to hide this to the user but to have a way to get the object used at the row ... )
     final static String SPECIAL_COL_KEY_OBJECT = "...";
     /**
      * Adaptable just have to use an existing key ... if you add/create a key
@@ -108,13 +108,13 @@ public class FindAllTraductionGetTableModel implements TableModel {
 	if (COL_KEY_ROW_NUM.equals(columnKey) || COL_KEY_LINE.equals(columnKey)) {
 	    return Integer.class;
 	}
-//	else if (COL_KYE_S.equals(columnKey)) {
+//	else if (.equals(columnKey)) {
 //            return Long.class;
-//        } else if (COL_KYE_NAME.equals(columnKey)) {
+//        } else if (.equals(columnKey)) {
 //            return String.class;
-//        } else if (COL_KYE_isCust.equals(columnKey)) {
+//        } else if (.equals(columnKey)) {
 //            return Boolean.class;
-//        } else if (COL_KYE_DUP.equals(columnKey)) {
+//        } else if (.equals(columnKey)) {
 //            return JButton.class;
 //        }
 	return Object.class;
@@ -165,7 +165,7 @@ public class FindAllTraductionGetTableModel implements TableModel {
 	    // 
 	    String tmpS = mr.argsMatch;
 	    if ( tmpS.startsWith("\"") && tmpS.endsWith("\"")){
-		return Translator.get(tmpS.substring(1, tmpS.length()-1));
+		return "\""+Translator.get(tmpS.substring(1, tmpS.length()-1))+"\"";
 	    }
 	    
 	}
@@ -217,10 +217,15 @@ public class FindAllTraductionGetTableModel implements TableModel {
         }
     }
     //
-    //
+    // ? Notifieur / Notifié pattern implementation.
     //
     private ArrayList<TableModelListener> arrayListTableModelListener = new ArrayList<>();
 
+    /**
+     * When a JTable use a TableModel normaly the JTable register a TableModelListener.
+     * This allow later to fireUpdate TableModelChange to the TableModelListener JTable when the table model have change. (so the JTable reload / refresh )
+     * @param l 
+     */
     @Override
     public void addTableModelListener(TableModelListener l) {
 	arrayListTableModelListener.add(l);

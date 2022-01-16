@@ -39,6 +39,7 @@ public class TranslatorLanguage {
 
 	private static final Logger logger = LoggerFactory.getLogger(TranslatorLanguage.class);
 	
+	private String languageFileSrc = "";
 	private String name = "";
 	private String author = "";
 	private Map<String, String> strings = new HashMap<String, String>();
@@ -48,6 +49,7 @@ public class TranslatorLanguage {
 	 * @param languageFile
 	 */
 	public void loadFromString(String languageFile) {
+	    this.languageFileSrc = languageFile;
 		final DocumentBuilder db = getDocumentBuilder();
 		if (db == null) {
 			return;
@@ -144,7 +146,7 @@ public class TranslatorLanguage {
 	public static final String XML_TAG_HINT = "hint";
     
 
-	boolean xmlValidation = true; // so if a xml have no DTD this wil throw a lot of exceptions ...
+	boolean xmlValidation = false; // so if a xml have no DTD this wil throw a lot of exceptions ...
 	
 	private DocumentBuilder getDocumentBuilder() {
 		DocumentBuilder db = null;
@@ -313,4 +315,13 @@ public class TranslatorLanguage {
 	public String getAuthor() {
 		return author;
 	}
+	
+	//
+	// Needed by TranslatorTableModel
+	//
+
+    public Map<String, String> getStrings() {
+	return strings;
+    }
+	
 }

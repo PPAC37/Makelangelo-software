@@ -153,7 +153,12 @@ public final class Translator {
 		}
 	}
 
-	private static Stream<Path> getLanguagePaths() throws Exception {
+	/**
+	 * Set public for the need of ...
+	 * @return
+	 * @throws Exception 
+	 */
+	public static Stream<Path> getLanguagePaths() throws Exception {
 		URI uri = Translator.class.getClassLoader().getResource(WORKING_DIRECTORY).toURI();
 		logger.trace("Looking for translations in {}", uri.toString());
 		
@@ -341,4 +346,19 @@ public final class Translator {
 		// failed both, return 0 for the first option.
 		return 0;
 	}
+	
+	//
+	// Needed be the TrnslatorTableModel
+	//
+
+	public static String getCurrentLanguage() {
+	    return currentLanguage;
+	}
+
+	public static Map<String, TranslatorLanguage> getLanguages() {
+	    return languages;
+	}
+
+	
+	
 }
