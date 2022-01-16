@@ -31,7 +31,9 @@ public final class SerialConnection extends NetworkSession implements SerialPort
 			if (serialPort != null) {
 				try {
 					serialPort.removeEventListener();
-					serialPort.closePort();
+				    boolean closePort = serialPort.closePort();
+				    logger.debug("closeConnection() "+closePort);
+				    
 				} catch (SerialPortException e) {
 					logger.error("Close failed", e);
 				}
@@ -49,8 +51,19 @@ public final class SerialConnection extends NetworkSession implements SerialPort
 		
 		// open the port
 		serialPort = new SerialPort(portName);
-		serialPort.openPort();// Open serial port
-		serialPort.setParams(BAUD_RATE, SerialPort.DATABITS_8, SerialPort.STOPBITS_1, SerialPort.PARITY_NONE);
+	   
+		logger.debug(String.format("openConnection(\"%s\") opened = %b.",portName,serialPort.isOpened()));
+	
+//		serialPort.openPort();// Open serial port
+//		serialPort.setParams(BAUD_RATE, SerialPort.DATABITS_8, SerialPort.STOPBITS_1, SerialPort.PARITY_NONE);
+//		
+		
+	    boolean openPort = serialPort.openPort(); // Open serial port
+	    logger.debug(String.format("openConnection(\"%s\") opened = %b.",portName,serialPort.isOpened()));
+	    
+	    boolean setParams = serialPort.setParams(BAUD_RATE, SerialPort.DATABITS_8, SerialPort.STOPBITS_1, SerialPort.PARITY_NONE);
+	    logger.debug(String.format("openConnection(\"%s\") openPort = %b setParams = %b.",portName,openPort,setParams));
+		
 		serialPort.addEventListener(this);
 
 		setName(portName);
@@ -64,6 +77,7 @@ public final class SerialConnection extends NetworkSession implements SerialPort
 		String rawInput, oneLine;
 		int x;
 
+		logger.debug(String.format("%s : %d %d", events.getPort().getPortName(),events.getEventType(),events.getEventValue()));
 		if(!events.isRXCHAR()) return;
 		if(!portOpened) return;
 		int len =0 ;
@@ -72,6 +86,7 @@ public final class SerialConnection extends NetworkSession implements SerialPort
 			len = events.getEventValue();
 			buffer = serialPort.readBytes(len);
 		} catch (SerialPortException e) {
+		    e.printStackTrace();
 			// uh oh
 			return;
 		}
