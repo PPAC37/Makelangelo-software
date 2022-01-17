@@ -215,15 +215,51 @@
 	</string>
 
 	<string>
-		<key>PaperWidth</key>
+		<key>PaperSettings.PaperSize</key>
+		<value>Paper Size</value>
+		<hint>Paper settings panel</hint>
+	</string>
+	<string>
+		<key>PaperSettings.PaperWidth</key>
 		<value>Paper width</value>
 		<hint>Paper settings panel</hint>
 	</string>
 	<string>
-		<key>PaperHeight</key>
+		<key>PaperSettings.PaperHeight</key>
 		<value>Paper height</value>
 		<hint>Paper settings panel</hint>
 	</string>
+	<string>
+		<key>PaperSettings.ShiftX</key>
+		<value>Shift left</value>
+		<hint>Paper settings panel</hint>
+	</string>
+	<string>
+		<key>PaperSettings.ShiftY</key>
+		<value>Shift up</value>
+		<hint>Paper settings panel</hint>
+	</string>
+	<string>
+		<key>PaperSettings.Rotation</key>
+		<value>Rotation</value>
+		<hint>Paper settings panel</hint>
+	</string>
+	<string>
+		<key>PaperSettings.Landscape</key>
+		<value>Landscape</value>
+		<hint>Paper settings panel</hint>
+	</string>
+	<string>
+		<key>PaperSettings.PaperMargin</key>
+		<value>Margin (%)</value>
+		<hint>Paper settings panel</hint>
+	</string>
+	<string>
+		<key>PaperSettings.PaperColor</key>
+		<value>Paper color</value>
+		<hint>Paper settings panel</hint>
+	</string>
+
 	<string>
 		<key>isLandscape</key>
 		<value>Is landscape?</value>
@@ -498,22 +534,22 @@
 		<hint>menu or dialog title</hint>
 	</string>
 	<string>
-		<key>MenuGraphicsPenUp</key>
+		<key>GFXPreferences.showPenUp</key>
 		<value>Show travel moves</value>
 		<hint>graphics settings dialog</hint>
 	</string>
 	<string>
-		<key>MenuGraphicsAntialias</key>
+		<key>GFXPreferences.antialias</key>
 		<value>Antialias lines</value>
 		<hint>graphics settings dialog</hint>
 	</string>
 	<string>
-		<key>MenuGraphicsSpeedVSQuality</key>
+		<key>GFXPreferences.speedVSQuality</key>
 		<value>Speed over quality</value>
 		<hint>graphics settings dialog</hint>
 	</string>
 	<string>
-		<key>MenuGraphicsDrawWhileRunning</key>
+		<key>GFXPreferences.showAllWhileDrawing</key>
 		<value>Show entire image while drawing</value>
 		<hint>graphics settings dialog</hint>
 	</string>
@@ -556,11 +592,7 @@
 		<hint>start at dialog</hint>
 	</string>
 
-	<string>
-		<key>PlotterControls.Pause</key>
-		<value>Pause</value>
-		<hint>menu or dialog title</hint>
-	</string>
+
 
 	<string>
 		<key>Robot</key>
@@ -568,13 +600,49 @@
 		<hint>menu or dialog title</hint>
 	</string>
 	<string>
-		<key>OpenControls</key>
+		<key>RobotMenu.OpenControls</key>
 		<value>Open Controls</value>
 		<hint>menu or dialog title</hint>
 	</string>
 	<string>
-		<key>SaveGCode</key>
+		<key>RobotMenu.SaveGCode</key>
 		<value>Save Gcode to file/SD</value>
+		<hint>menu or dialog title</hint>
+	</string>
+	<string>
+		<key>RobotMenu.Style</key>
+		<value>Machine style</value>
+		<hint>menu or dialog title</hint>
+	</string>
+	<string>
+		<key>RobotMenu.GetTimeEstimate</key>
+		<value>Estimate time</value>
+		<hint>menu or dialog title</hint>
+	</string>
+
+	<string>
+		<key>PlotterControls.Title</key>
+		<value>Robot controls</value>
+		<hint>title</hint>
+	</string>
+	<string>
+		<key>PlotterControls.ConnectControls</key>
+		<value>Connect</value>
+		<hint>title</hint>
+	</string>
+	<string>
+		<key>PlotterControls.DrawControls</key>
+		<value>Draw controls</value>
+		<hint>panel title</hint>
+	</string>
+	<string>
+		<key>PlotterControls.FindHome</key>
+		<value>Find home</value>
+		<hint>manual driving dialog</hint>
+	</string>
+	<string>
+		<key>PlotterControls.Pause</key>
+		<value>Pause</value>
 		<hint>menu or dialog title</hint>
 	</string>
 	<string>
@@ -586,6 +654,57 @@
 		<key>PlotterControls.Play</key>
 		<value>Draw</value>
 		<hint>menu or dialog title</hint>
+	</string>
+	<string>
+		<key>PlotterControls.Connect</key>
+		<value>Connect</value>
+		<hint>title</hint>
+	</string>
+	<string>
+		<key>PlotterControls.EmergencyStop</key>
+		<value>Emergency Stop</value>
+		<hint>button</hint>
+	</string>
+	<string>
+		<key>PlotterControls.MarlinTab</key>
+		<value>Marlin</value>
+		<hint>panel tab title</hint>
+	</string>
+	<string>
+		<key>PlotterControls.ProgramTab</key>
+		<value>Program</value>
+		<hint>panel tab title</hint>
+	</string>
+	<string>
+		<key>PlotterControls.JogTab</key>
+		<value>Robot controls</value>
+		<hint>panel tab title</hint>
+	</string>
+	<string>
+		<key>PlotterControls.AdvancedControls</key>
+		<value>Advanced controls</value>
+		<hint>panel title</hint>
+	</string>
+	<string>
+		<key>PlotterControls.FatalErrorTitle</key>
+		<value>Fatal Error</value>
+		<hint>panel title</hint>
+	</string>
+	<string>
+		<key>PlotterControls.FatalError</key>
+		<value>The printer encountered a fatal error, check the MarlinInterface tab to get details.</value>
+		<hint>texte</hint>
+	</string>
+
+	<string>
+		<key>ConversationHistory.Clear</key>
+		<value>Clear</value>
+		<hint>button</hint>
+	</string>
+	<string>
+		<key>ConversationHistory.Save</key>
+		<value>Save</value>
+		<hint>button</hint>
 	</string>
 
 	<string>
@@ -614,7 +733,12 @@
 		<value>Right</value>
 		<hint>manual driving dialog</hint>
 	</string>
-	
+
+	<string>
+		<key>JogInterface.FindHome</key>
+		<value>Home</value>
+		<hint>manual driving dialog</hint>
+	</string>
 	<string>
 		<key>JogInterface.PenUp</key>
 		<value>Pen up</value>
@@ -634,11 +758,6 @@
 		<key>JogInterface.EngageMotors</key>
 		<value>Engage</value>
 		<hint>Manual driving dialog</hint>
-	</string>
-	<string>
-		<key>JogInterface.FindHome</key>
-		<value>Find home</value>
-		<hint>manual driving dialog</hint>
 	</string>
 	<string>
 		<key>Set</key>
@@ -889,22 +1008,22 @@
 	</string>
 
 	<string>
-		<key>MenuPreview</key>
+		<key>MenuView</key>
 		<value>View</value>
 		<hint>menu or dialog title</hint>
 	</string>
 	<string>
-		<key>ZoomIn</key>
+		<key>MenuView.zoomIn</key>
 		<value>Zoom +</value>
 		<hint>menu or dialog title</hint>
 	</string>
 	<string>
-		<key>ZoomOut</key>
+		<key>MenuView.zoomOut</key>
 		<value>Zoom -</value>
 		<hint>menu or dialog title</hint>
 	</string>
 	<string>
-		<key>ZoomFit</key>
+		<key>MenuView.zoomFit</key>
 		<value>Zoom to fit</value>
 		<hint>menu or dialog title</hint>
 	</string>
@@ -1620,12 +1739,6 @@
 	</string>
 
 	<string>
-		<key>paper color</key>
-		<value>Paper color</value>
-		<hint></hint>
-	</string>
-
-	<string>
 		<key>Crosshatch</key>
 		<value>Crosshatch</value>
 		<hint></hint>
@@ -1923,5 +2036,10 @@
 		<key>InfillTurtleAction.title</key>
 		<value>Fill in closed loops</value>
 		<hint></hint>
+	</string>
+
+	<string>
+		<key>CopyClipboard</key>
+		<value>Copy to clipboard</value>
 	</string>
 </language>

@@ -1,11 +1,20 @@
 package com.marginallyclever.makelangelo.plotter.marlinSimulation;
 
+import com.marginallyclever.convenience.StringHelper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.vecmath.Vector3d;
 
-import com.marginallyclever.convenience.StringHelper;
-import com.marginallyclever.convenience.log.Log;
-
+/**
+ * {@link MarlinSimulationBlock} is one block in the queue of blocks inside a {@link MarlinSimulation}.
+ * For more details, please see Marlin documentation.
+ * @author Dan Royer
+ * @since 7.24.0
+ */
 public class MarlinSimulationBlock {
+	private static final Logger logger = LoggerFactory.getLogger(MarlinSimulationBlock.class);
+
 	public static int counter=0;
 	public int id;
 	
@@ -79,6 +88,6 @@ public class MarlinSimulationBlock {
 				"\t" + StringHelper.formatDouble(accelerateUntilT) +
 				"\t" + StringHelper.formatDouble(decelerateAfterT) +
 				"\t" + (nominalLength ? 1 : 0);
-		Log.message(res);
+		logger.debug(res);
 	}
 }

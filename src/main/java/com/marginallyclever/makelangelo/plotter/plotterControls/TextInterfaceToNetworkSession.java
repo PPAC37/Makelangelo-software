@@ -1,38 +1,34 @@
 package com.marginallyclever.makelangelo.plotter.plotterControls;
 
-import java.awt.BorderLayout;
-import java.awt.Dimension;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.ArrayList;
-
-import javax.swing.JFrame;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
 import com.marginallyclever.communications.NetworkSession;
 import com.marginallyclever.communications.NetworkSessionEvent;
 import com.marginallyclever.communications.NetworkSessionListener;
 import com.marginallyclever.convenience.CommandLineOptions;
-import com.marginallyclever.convenience.log.Log;
 import com.marginallyclever.makelangelo.Translator;
 import com.marginallyclever.util.PreferencesHelper;
 
+import javax.swing.*;
+import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * {@link TextInterfaceToNetworkSession} provides a method to open and close a 
+ * {@link NetworkSession} connection through a {@link ChooseConnection}
+ * interface and allow two way communication through a {@link TextInterfaceWithHistory} interface. 
+ * @author Dan Royer
+ * @since 7.28.0
+ */
 public class TextInterfaceToNetworkSession extends JPanel implements NetworkSessionListener {
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 1032123255711692874L;
 	private TextInterfaceWithHistory myInterface = new TextInterfaceWithHistory();
-	private ChooseConnection myConnectionChoice = new ChooseConnection();
 	private NetworkSession mySession;
 
-	public TextInterfaceToNetworkSession() {
+	public TextInterfaceToNetworkSession(ChooseConnection chooseConnection) {
 		super();
 
-		//this.setBorder(BorderFactory.createTitledBorder(TextInterfaceToNetworkSession.class.getSimpleName()));
 		setLayout(new BorderLayout());
 		
-		add(myConnectionChoice,BorderLayout.NORTH);
 		add(myInterface,BorderLayout.CENTER);
 		
 		myInterface.setEnabled(false);
@@ -48,26 +44,21 @@ public class TextInterfaceToNetworkSession extends JPanel implements NetworkSess
 				JOptionPane.showMessageDialog(this,e1.getLocalizedMessage(),"Error",JOptionPane.ERROR_MESSAGE);
 			}
 		});
-		myConnectionChoice.addActionListener((e)->{
-			switch(e.getID()) {
-			case ChooseConnection.CONNECTION_OPENED: 
-				setNetworkSession(myConnectionChoice.getNetworkSession());
-				break;
-			case ChooseConnection.CONNECTION_CLOSED:
-				setNetworkSession(null);
-				break;
+		chooseConnection.addListener((e)->{
+			switch (e.flag) {
+				case NetworkSessionEvent.CONNECTION_OPENED -> setNetworkSession((NetworkSession) e.data);
+				case NetworkSessionEvent.CONNECTION_CLOSED -> setNetworkSession(null);
 			}
-			
+
 			notifyListeners(e);
 		});
 	}
-	
+
 	public void setNetworkSession(NetworkSession session) {
 		if(mySession!=null) mySession.removeListener(this);
 		mySession = session;
 		if(mySession!=null) mySession.addListener(this);
 		
-		myConnectionChoice.setNetworkSession(session);
 		myInterface.setEnabled(mySession!=null);
 	}
 
@@ -95,23 +86,26 @@ public class TextInterfaceToNetworkSession extends JPanel implements NetworkSess
 	}
 
 	public void closeConnection() {
-		myConnectionChoice.closeConnection();
+		if (mySession != null) {
+			mySession.closeConnection();
+		}
 	}
-	
+
 	// OBSERVER PATTERN
-	
-	private ArrayList<ActionListener> listeners = new ArrayList<ActionListener>();
-	public void addActionListener(ActionListener a) {
-		listeners.add(a);
+
+	private List<NetworkSessionListener> listeners = new ArrayList<>();
+
+	public void addListener(NetworkSessionListener listener) {
+		listeners.add(listener);
 	}
-	
-	public void removeActionListener(ActionListener a) {
-		listeners.remove(a);
+
+	public void removeListener(NetworkSessionListener listener) {
+		listeners.remove(listener);
 	}
-	
-	private void notifyListeners(ActionEvent e) {
-		for( ActionListener a : listeners ) {
-			a.actionPerformed(e);
+
+	private void notifyListeners(NetworkSessionEvent evt) {
+		for( NetworkSessionListener a : listeners ) {
+			a.networkSessionEvent(evt);
 		}
 	}
 
@@ -126,15 +120,14 @@ public class TextInterfaceToNetworkSession extends JPanel implements NetworkSess
 	// TEST 
 	
 	public static void main(String[] args) {
-		Log.start();
 		PreferencesHelper.start();
 		CommandLineOptions.setFromMain(args);
 		Translator.start();
 		
 		JFrame frame = new JFrame(TextInterfaceToNetworkSession.class.getSimpleName());
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		frame.setPreferredSize(new Dimension(600, 400));
-		frame.add(new TextInterfaceToNetworkSession());
+//		frame.setPreferredSize(new Dimension(600, 400));
+		frame.add(new TextInterfaceToNetworkSession(new ChooseConnection()));
 		frame.pack();
 		frame.setVisible(true);
 	}

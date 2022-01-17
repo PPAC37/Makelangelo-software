@@ -5,7 +5,6 @@ import java.beans.PropertyChangeEvent;
 import javax.swing.JFrame;
 
 import com.marginallyclever.convenience.CommandLineOptions;
-import com.marginallyclever.convenience.log.Log;
 import com.marginallyclever.makelangelo.Translator;
 import com.marginallyclever.makelangelo.select.SelectBoolean;
 import com.marginallyclever.makelangelo.select.SelectColor;
@@ -14,8 +13,13 @@ import com.marginallyclever.makelangelo.select.SelectOneOfMany;
 import com.marginallyclever.makelangelo.select.SelectPanel;
 import com.marginallyclever.makelangelo.select.SelectSlider;
 import com.marginallyclever.util.PreferencesHelper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class PaperSettings extends SelectPanel {
+
+	private static final Logger logger = LoggerFactory.getLogger(PaperSettings.class);
+	
 	private static final long serialVersionUID = 2824594482225714527L;
 
 	protected static PaperSize commonPaperSizes [] = {
@@ -71,16 +75,15 @@ public class PaperSettings extends SelectPanel {
 		double right = myPaper.getPaperRight();
 		double rot = myPaper.getRotation();
 		
-		add(paperSizes = new SelectOneOfMany("size",Translator.get("PaperSize"),commonPaperNames,0));
-		add(pw = new SelectDouble("width",Translator.get("PaperWidth"),(double)(right-left)));
-		add(ph = new SelectDouble("height",Translator.get("PaperHeight"),(double)(top-bot))); 
-		add(shiftX = new SelectDouble("shiftx","Shift X",(float)(left+right)/2.0f)); 
-		add(shiftY = new SelectDouble("shifty","Shift y",(float)(top+bot)/2.0f)); 
-		add(ang = new SelectDouble("rotation","Rotation",(float)rot));
-		add(isLandscape = new SelectBoolean("landscape","\u21cb",false));
-		add(paperMargin = new SelectSlider("margin",Translator.get("PaperMargin"),50,0,100 - (int) (myPaper.getPaperMargin() * 100)));
-		add(paperColor = new SelectColor("color",Translator.get("paper color"),myPaper.getPaperColor(),getPanel()));
-		finish();
+		add(paperSizes = new SelectOneOfMany("size",Translator.get("PaperSettings.PaperSize"),commonPaperNames,0));
+		add(pw = new SelectDouble("width",Translator.get("PaperSettings.PaperWidth"),right-left));
+		add(ph = new SelectDouble("height",Translator.get("PaperSettings.PaperHeight"),top-bot));
+		add(shiftX = new SelectDouble("shiftx",Translator.get("PaperSettings.ShiftX"),(float)(left+right)/2.0f));
+		add(shiftY = new SelectDouble("shifty",Translator.get("PaperSettings.ShiftY"),(float)(top+bot)/2.0f));
+		add(ang = new SelectDouble("rotation",Translator.get("PaperSettings.Rotation"),(float)rot));
+		add(isLandscape = new SelectBoolean("landscape",Translator.get("PaperSettings.Landscape"),false));
+		add(paperMargin = new SelectSlider("margin",Translator.get("PaperSettings.PaperMargin"),50,0,100 - (int) (myPaper.getPaperMargin() * 100)));
+		add(paperColor = new SelectColor("color",Translator.get("PaperSettings.PaperColor"),myPaper.getPaperColor(),this));
 
 		getValuesFromPaper();// As the paper load this value from the pref when instancied.		
 		onPaperDimensionsChange(null);//this set the SelectOneOfMany paperSizes and the landscape checkbox to the correcte values.
@@ -97,40 +100,40 @@ public class PaperSettings extends SelectPanel {
 	}
 	
 	private void onPaperDimensionsChange(PropertyChangeEvent e) {
-		Log.message("onPaperDimensionsChange()");
+		logger.debug("onPaperDimensionsChange()");
 		double w=getPaperWidthFromPanel();
 		double h=getPaperHeightFromPanel();
 
 		int i = getCurrentPaperSizeChoice( h, w );
 		if(i!=0) {
-			Log.message("landscape "+i+" found");
+			logger.debug("landscape {} found", i);
 			isLandscape.setSelected(true);
 		} else {
 			i = getCurrentPaperSizeChoice( w, h );
 			if(i!=0) {
-				Log.message("portrait "+i+" found");			
+				logger.debug("portrait {} found", i);
 				isLandscape.setSelected(false);
 			}
 		}
 		if(paperSizes.getSelectedIndex()!=i) paperSizes.setSelectedIndex(i);
-		
-		Log.message("onPaperDimensionsChange() done");
+		logger.debug("onPaperDimensionsChange() done");
 	}
 
 	private void onLandscapeChange(PropertyChangeEvent e) {
-		Log.message("onLandscapeChange()");
+		logger.debug("onLandscapeChange()");
 		double w = pw.getValue();
 		double h = ph.getValue();
 		pw.setValue(h);
 		ph.setValue(w);
-		Log.message("onLandscapeChange() done");
+		setPaperFromPanel();
+		logger.debug("onLandscapeChange() done");
 	}
 
 	private void onPaperSizeChange(PropertyChangeEvent e) {
-		Log.message("onPaperSizeChange()");
+		logger.debug("onPaperSizeChange()");
 		final int selectedIndex = paperSizes.getSelectedIndex();
 		if(selectedIndex != 0) {
-			Log.message("found index "+selectedIndex);
+			logger.debug("found index {}", selectedIndex);
 			PaperSize s = commonPaperSizes[selectedIndex-1];
 			double w = s.width;
 			double h = s.height;
@@ -151,7 +154,7 @@ public class PaperSettings extends SelectPanel {
 			}
 			if(isDirty)	setPaperFromPanel();
 		}
-		Log.message("onPaperSizeChange() done");
+		logger.debug("onPaperSizeChange() done");
 	}
 	
 	/**
@@ -161,8 +164,8 @@ public class PaperSettings extends SelectPanel {
 		double w=0;
 		try {
 			w = ((Number)pw.getValue()).doubleValue();
-		} catch(Exception err) {
-			Log.error(err.getMessage());
+		} catch(Exception e) {
+			logger.error("Failed to get paper width", e);
 		}
 		return w;
 	}
@@ -174,8 +177,8 @@ public class PaperSettings extends SelectPanel {
 		double h=0;
 		try {
 			h = ((Number)ph.getValue()).doubleValue();
-		} catch(Exception err) {
-			Log.error(err.getMessage());
+		} catch(Exception e) {
+			logger.error("Failed to get paper height", e);
 		}
 		return h;
 	}
@@ -184,7 +187,7 @@ public class PaperSettings extends SelectPanel {
 	 * Apply this panel values to {@code myPaper}
 	 */
 	private void setPaperFromPanel() {
-		Log.message("updatePaperFromPanel()");
+		logger.debug("updatePaperFromPanel()");
 		double w = ((Number)pw.getValue()).doubleValue();
 		double h = ((Number)ph.getValue()).doubleValue();
 		double sx = ((Number)shiftX.getValue()).doubleValue();
@@ -194,6 +197,7 @@ public class PaperSettings extends SelectPanel {
 		myPaper.setRotation(rot);
 		myPaper.setPaperColor(paperColor.getColor());
 		myPaper.setPaperMargin((100 - paperMargin.getValue()) * 0.01);
+		myPaper.saveConfig();
 	}
 
 	/**
@@ -239,13 +243,13 @@ public class PaperSettings extends SelectPanel {
 
 			double pm = (100 - paperMargin.getValue()) * 0.01;
 			myPaper.setPaperMargin(pm);
+			myPaper.saveConfig();
 		}
 	}
 	
 	// TEST
 	
 	public static void main(String[] args) {
-		Log.start();
 		PreferencesHelper.start();
 		CommandLineOptions.setFromMain(args);
 		Translator.start();

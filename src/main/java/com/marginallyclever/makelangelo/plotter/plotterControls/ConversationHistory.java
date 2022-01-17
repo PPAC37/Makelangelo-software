@@ -1,43 +1,39 @@
 package com.marginallyclever.makelangelo.plotter.plotterControls;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Component;
-import java.awt.Graphics;
+import com.marginallyclever.convenience.ButtonIcon;
+import com.marginallyclever.convenience.CommandLineOptions;
+import com.marginallyclever.makelangelo.Translator;
+import com.marginallyclever.util.PreferencesHelper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.swing.*;
+import javax.swing.border.EtchedBorder;
+import javax.swing.event.ListSelectionListener;
+import java.awt.*;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import javax.swing.BorderFactory;
-import javax.swing.DefaultListCellRenderer;
-import javax.swing.DefaultListModel;
-import javax.swing.JButton;
-import javax.swing.JFileChooser;
-import javax.swing.JFrame;
-import javax.swing.JLabel;
-import javax.swing.JList;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JToolBar;
-import javax.swing.ListCellRenderer;
-import javax.swing.ListSelectionModel;
-import javax.swing.border.EtchedBorder;
-import javax.swing.event.ListSelectionListener;
-
-import com.marginallyclever.convenience.log.Log;
-
+/**
+ * {@link ConversationHistory} maintains a history of the dialog between two or more parties.
+ * New entries can be added with {@code addElement(senderName,message)}.
+ * {@link ListSelectionListener}s will be notified if the user selects a line entry in the history.
+ * @author Dan Royer
+ * @since 7.28.0
+ */
 public class ConversationHistory extends JPanel {
+	private static final Logger logger = LoggerFactory.getLogger(ConversationHistory.class);
 	private static final long serialVersionUID = 6287436679006933618L;
 	private DefaultListModel<ConversationEvent> listModel = new DefaultListModel<ConversationEvent>();
 	private JList<ConversationEvent> listView = new JList<ConversationEvent>(listModel);
 	private ConcurrentLinkedQueue<ConversationEvent> inBoundQueue = new ConcurrentLinkedQueue<ConversationEvent>();
 	private JFileChooser chooser = new JFileChooser();
 
-	private JButton bClear = new JButton("Clear");
-	private JButton bSave = new JButton("Save");
+	private ButtonIcon bClear = new ButtonIcon("ConversationHistory.Clear", "/images/application.png");
+	private ButtonIcon bSave = new ButtonIcon("ConversationHistory.Save", "/images/disk.png");
 
 	
 	public ConversationHistory() {
@@ -57,11 +53,11 @@ public class ConversationHistory extends JPanel {
 	
 	private JToolBar getToolBar() {
 		JToolBar bar = new JToolBar();
-		bar.setRollover(true);
+		bar.setFloatable(false);
 
-		bar.add(bClear);
 		bar.add(bSave);
-		
+		bar.add(bClear);
+
 		bClear.addActionListener( (e) -> runNewAction() );
 		bSave.addActionListener( (e) -> runSaveAction() );
 		
@@ -98,9 +94,9 @@ public class ConversationHistory extends JPanel {
 		if(chooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
 			try {
 				saveFile(chooser.getSelectedFile());
-			} catch (IOException e1) {
-				JOptionPane.showMessageDialog(this, e1.getLocalizedMessage(),"runSaveAction error",JOptionPane.ERROR_MESSAGE);
-				e1.printStackTrace();
+			} catch (IOException e) {
+				logger.error("Failed to save file", e);
+				JOptionPane.showMessageDialog(this, e.getLocalizedMessage(),"runSaveAction error",JOptionPane.ERROR_MESSAGE);
 			}
 		}
 	}
@@ -162,11 +158,19 @@ public class ConversationHistory extends JPanel {
 	// TEST
 	
 	public static void main(String[] args) {
-		Log.start();
+		PreferencesHelper.start();
+		CommandLineOptions.setFromMain(args);
+		Translator.start();
+
 		JFrame frame = new JFrame(ConversationHistory.class.getSimpleName());
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		frame.add(new ConversationHistory());
+		ConversationHistory ch = new ConversationHistory();
+		frame.add(ch);
 		frame.pack();
 		frame.setVisible(true);
+
+		ch.addElement("You", "N2 G28 XY*48");
+		ch.addElement("/dev/cu.usbserial-1410", "X:0.00 Y:-186.00 Z:200.00 Count X:72290 Y:72290 Z:32000");
+		ch.addElement("/dev/cu.usbserial-1410", "echo:; Advanced (B<min_segment_time_us> S<min_feedrate> T<min_travel_feedrate> X<max_x_jerk> Y<max_y_jerk> Z<max_z_jerk>):");
 	}
 }

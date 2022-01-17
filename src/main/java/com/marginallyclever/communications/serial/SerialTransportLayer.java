@@ -2,11 +2,14 @@ package com.marginallyclever.communications.serial;
 
 import com.marginallyclever.communications.NetworkSession;
 import com.marginallyclever.communications.TransportLayer;
-import com.marginallyclever.communications.TransportLayerPanel;
-import com.marginallyclever.convenience.log.Log;
 
+import java.util.Arrays;
+import java.util.List;
+import java.util.Locale;
 import java.util.regex.Pattern;
 import jssc.SerialPortList;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -16,6 +19,9 @@ import jssc.SerialPortList;
  * @since v7.1.0.0
  */
 public class SerialTransportLayer implements TransportLayer {
+
+	private static final Logger logger = LoggerFactory.getLogger(SerialTransportLayer.class);
+
 	public SerialTransportLayer() {}
 
 	public String getName() {
@@ -26,35 +32,31 @@ public class SerialTransportLayer implements TransportLayer {
 	 * find all available serial ports.
 	 * @return a list of port names
 	 */
-	public static String[] listConnections() {
-		String OS = System.getProperty("os.name").toLowerCase();
-
+	public List<String> listConnections() {
 		String [] portsDetected;
-		if (OS.indexOf("mac") >= 0) {
+
+		String os = System.getProperty("os.name").toLowerCase(Locale.ENGLISH);
+		if ((os.contains("mac")) || (os.contains("darwin"))) {
 			// Also list Bluetooth serial connections
 			portsDetected = SerialPortList.getPortNames(Pattern.compile("cu"));
+
+			Arrays.sort(portsDetected, (o1, o2) -> {
+				// cu.usbserial* are most used, so put it on the top of the list
+				if (o1.contains("cu.usbserial") && o2.contains("cu.usbserial")) {
+					return o1.compareTo(o2);
+				}
+				if (o2.contains("cu.usbserial")) {
+					return 1;
+				} else if (o1.contains("cu.usbserial")) {
+					return -1;
+				}
+				return o1.compareTo(o2);
+			});
 		} else {
 			portsDetected = SerialPortList.getPortNames();
 		}
 
-		/*
-		String OS = System.getProperty("os.name").toLowerCase();
-		if (OS.indexOf("mac") >= 0) {
-			SerialPortList.
-			"/dev/");
-			//Log.message("OS X");
-		} else if (OS.indexOf("win") >= 0) {
-			portsDetected = SerialPortList.getPortNames("COM");
-			//Log.message("Windows");
-		} else if (OS.indexOf("nix") >= 0 || OS.indexOf("nux") >= 0 || OS.indexOf("aix") > 0) {
-			portsDetected = SerialPortList.getPortNames("/dev/");
-			//Log.message("Linux/Unix");
-		} else {
-			Log.message("OS ERROR");
-			Log.message("OS NAME=" + System.getProperty("os.name"));
-		}*/
-		
-		return portsDetected;
+		return Arrays.asList(portsDetected);
 	}
 
 	/**
@@ -62,33 +64,15 @@ public class SerialTransportLayer implements TransportLayer {
 	 */
 	@Override
 	public NetworkSession openConnection(String connectionName) {
-		//if(connectionName.equals(recentPort)) return null;
-
 		SerialConnection serialConnection = new SerialConnection();
 
 		try {
 			serialConnection.openConnection(connectionName);
 		} catch (Exception e) {
+			logger.error("Failed to open the serial {}; Ignoring", connectionName, e);
 			return null;
 		}
 
 		return serialConnection;
-	}
-
-	/**
-	 * @return a panel with the gui options for this transport layer
-	 */
-	public TransportLayerPanel getTransportLayerPanel() {
-		return new SerialTransportLayerPanel(this);
-	}
-	
-	public static void main(String[] args) {
-		Log.start();
-		Log.message("connections:");
-		String [] list = SerialTransportLayer.listConnections();
-		for(String s : list ) {
-			Log.message(s);
-		}
-		Log.end();
 	}
 }

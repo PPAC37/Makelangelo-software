@@ -2,8 +2,10 @@ package com.marginallyclever.communications.tcp;
 
 import com.marginallyclever.communications.NetworkSession;
 import com.marginallyclever.communications.TransportLayer;
-import com.marginallyclever.communications.TransportLayerPanel;
-import com.marginallyclever.convenience.log.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.List;
 
 /**
  * Lists available TCP connections and opens a connection of that type to a robot
@@ -12,6 +14,8 @@ import com.marginallyclever.convenience.log.Log;
  * @since v7.1.0.0
  */
 public class TCPTransportLayer implements TransportLayer {
+	private static final Logger logger = LoggerFactory.getLogger(TCPTransportLayer.class);
+
 	public TCPTransportLayer() {}
 
 	public String getName() {
@@ -31,15 +35,14 @@ public class TCPTransportLayer implements TransportLayer {
 			return null;
 		}
 		*/
-		Log.message("Connecting to "+connectionName);
+		logger.info("Connecting to {}", connectionName);
 		TCPConnection connection = new TCPConnection();
 
 		try {
 			connection.openConnection(connectionName);
-			Log.message("Connect OK");
+			logger.info("Connect OK");
 		} catch (Exception e) {
-			Log.message("Connect FAILED");
-			e.printStackTrace();
+			logger.error("Connection FAILED to {}", connection, e);
 			return null;
 		}
 
@@ -47,7 +50,7 @@ public class TCPTransportLayer implements TransportLayer {
 	}
 
 	@Override
-	public TransportLayerPanel getTransportLayerPanel() {
-		return new TCPTransportLayerPanel(this);
+	public List<String> listConnections() {
+		return List.of("192.168.1.183:9999");
 	}
 }

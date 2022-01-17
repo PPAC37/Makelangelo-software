@@ -1,30 +1,35 @@
 package com.marginallyclever.makelangelo.plotter.marlinSimulation;
 
-import java.util.Iterator;
-import java.util.LinkedList;
-
-import javax.vecmath.Vector3d;
-
-import com.marginallyclever.convenience.log.Log;
+import com.marginallyclever.convenience.Point2D;
 import com.marginallyclever.makelangelo.plotter.settings.PlotterSettings;
 import com.marginallyclever.makelangelo.turtle.Turtle;
 import com.marginallyclever.makelangelo.turtle.TurtleMove;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.vecmath.Vector3d;
+import java.util.Iterator;
+import java.util.LinkedList;
 
 
 /**
- * Simulating the firmware inside a Makelangelo to more accurately estimate the time to draw an image.
+ * {@link MarlinSimulation} is used to estimate the time to draw a set of gcode commands by a robot running Marlin 3D printer firmware.
+ * It is meant to be a 1:1 Java replica of Marlin's 'Planner' and 'Motor' classes.
  * @author Dan Royer
  * @since 7.24.0
  */
 public class MarlinSimulation {
+
+	private static final Logger logger = LoggerFactory.getLogger(MarlinSimulation.class);
+	
 	public static final int BLOCK_BUFFER_SIZE = 16;
 	public static final long DEFAULT_MINSEGMENTTIME = 20000;  // us
 	public static final double MIN_SEGMENT_LENGTH_MM = 0.5;
-	public static final double DEFAULT_FEEDRATE = 3000;   // mm/s
-	public static final double DEFAULT_ACCELERATION = 3000;  // mm/s/s
-	public static final double DEFAULT_TRAVEL_ACCELERATION = 3000;  // mm/s/s
-	public static final double MAX_FEEDRATE = 90*60;   // mm/s
-	public static final double MAX_ACCELERATION = 40*60;  // mm/s/s
+	public static final double DEFAULT_FEEDRATE = 3000;  // 3000=50*60 mm/s
+	public static final double DEFAULT_ACCELERATION = 3000;  // 3000=50*60 mm/s/s
+	//public static final double DEFAULT_TRAVEL_ACCELERATION = 3000;  // mm/s/s
+	public static final double MAX_FEEDRATE = 5400;  // 5400 = 90*60 mm/s
+	public static final double MAX_ACCELERATION = 2400;  // 2400=40*60 mm/s/s
 	public static final double MIN_ACCELERATION = 0.0;
 	public static final double MINIMUM_PLANNER_SPEED = 0.05;  // mm/s
 	public static final int SEGMENTS_PER_SECOND = 5;
@@ -129,7 +134,7 @@ public class MarlinSimulation {
 		Vector3d temp = new Vector3d();
 		temp.scale(fraction,seg.delta);
 		poseNow.add(temp,seg.start);
-		if(verbose) Log.message(poseNow+" ");
+		if(verbose) logger.debug("{} ", poseNow);
 	}*/
 
 	/**
@@ -561,7 +566,7 @@ public class MarlinSimulation {
 		block.decelerateAfterT = block.end_s - decelerateT;
 		
 		if(Double.isNaN(block.end_s)) {
-			Log.message("recalculateTrapezoidSegment() Uh oh");
+			logger.debug("recalculateTrapezoidSegment() Uh oh");
 		}
 	}
 	
@@ -606,8 +611,9 @@ public class MarlinSimulation {
 		double zd = settings.getPenDownAngle();
 		boolean isUp=true;
 		
-		double lx=settings.getHomeX();
-		double ly=settings.getHomeY();
+		Point2D home = settings.getHome();
+		double lx=home.x;
+		double ly=home.y;
 		poseNow.set(lx,ly,zu);
 		queue.clear();
 				

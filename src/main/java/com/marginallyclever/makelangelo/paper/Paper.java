@@ -3,15 +3,33 @@ package com.marginallyclever.makelangelo.paper;
 import java.awt.geom.Rectangle2D;
 import java.util.prefs.Preferences;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.jogamp.opengl.GL2;
 import com.marginallyclever.convenience.ColorRGB;
-import com.marginallyclever.convenience.log.Log;
 import com.marginallyclever.makelangelo.preview.PreviewListener;
 import com.marginallyclever.util.PreferencesHelper;
 
 public class Paper implements PreviewListener {
-	private static final int DEFAULT_WIDTH=420; // mm
-	private static final int DEFAULT_HEIGHT=594; // mm
+
+	public static final int DEFAULT_WIDTH = 420; // mm
+	public static final int DEFAULT_HEIGHT = 594; // mm
+
+	private static final Logger logger = LoggerFactory.getLogger(Paper.class);
+
+	private static final String PREF_KEY_ROTATION = "rotation";
+	private static final String PREF_KEY_PAPER_MARGIN = "paper_margin";
+	private static final String PREF_KEY_PAPER_BOTTOM = "paper_bottom";
+	private static final String PREF_KEY_PAPER_TOP = "paper_top";
+	private static final String PREF_KEY_PAPER_RIGHT = "paper_right";
+	private static final String PREF_KEY_PAPER_LEFT = "paper_left";
+	private static final String PREF_KEY_PAPER_COLOR = "paper_color";
+	private static final String PREF_KEY_PAPER_CENTER_X = "paper_center_X";
+	private static final String PREF_KEY_PAPER_CENTER_Y = "paper_center_Y";
+
+	private static final Preferences paperPreferenceNode
+		= PreferencesHelper.getPreferenceNode(PreferencesHelper.MakelangeloPreferenceKey.PAPER);
 	
 	// paper border position ( from the center of the paper)
 	private double paperLeft;
@@ -33,17 +51,12 @@ public class Paper implements PreviewListener {
 	
 	public Paper() {
 		// paper area (default values)
-		double pw = DEFAULT_WIDTH;
-		double ph = DEFAULT_HEIGHT;
-		//setPaperSize(pw, ph, 0, 0);//have a saveToPrefAtTheEndNow ... so
-		setPaperSizeNoSave(pw, ph, 0, 0);		
+		setPaperSize(DEFAULT_WIDTH, DEFAULT_HEIGHT, 0, 0);		
 		
 		paperMargin = 0.95;
 
 		// If prefs values exist this load the pref values using last setPaperSize(...) setted values as default.
 		loadConfig();
-		
-
 	}
 	
 	@Override
@@ -91,58 +104,38 @@ public class Paper implements PreviewListener {
 	}
 
 	/**
-	 * To keep for dev modification debug purpose.
-	 */
-	private static boolean debugPaperSave = true;
-	
-	/**
 	    for debug purpose can be modified.
 	    @return description (position left,right,top,bottom and deducted width and height) of the paper.
 	*/
 	@Override
 	public String toString() {
-	    return String.format("Paper left=%5.2f right=%5.2f top=%5.2f bottom=%5.2f (-> Width = %5.2f Height = %5.2f) centerShift(X=%5.2f Y=%5.2f) color %s", 
-	    paperLeft,paperRight,paperTop,paperBottom,getPaperWidth(),getPaperHeight()
-		    ,centerX,centerY,paperColor
-	);
+		return String.format(
+				"Paper Width = %5.2f Height = %5.2f (left=%5.2f right=%5.2f top=%5.2f bottom=%5.2f) centerShift(X=%5.2f Y=%5.2f) color %s",
+				getPaperWidth(), getPaperHeight(), paperLeft, paperRight, paperTop, paperBottom, centerX, centerY, paperColor);
 	}
-
-
-	private static final String PREF_KEY_ROTATION = "rotation";
-	private static final String PREF_KEY_PAPER_MARGIN = "paper_margin";
-	private static final String PREF_KEY_PAPER_BOTTOM = "paper_bottom";
-	private static final String PREF_KEY_PAPER_TOP = "paper_top";
-	private static final String PREF_KEY_PAPER_RIGHT = "paper_right";
-	private static final String PREF_KEY_PAPER_LEFT = "paper_left";
-	private static final String PREF_KEY_PAPER_COLOR = "paper_color";
-	private static final String PREF_KEY_PAPER_CENTER_X = "paper_center_X";
-	private static final String PREF_KEY_PAPER_CENTER_Y = "paper_center_Y";
-
-	final static Preferences paperPreferenceNode
-		= PreferencesHelper.getPreferenceNode(PreferencesHelper.MakelangeloPreferenceKey.PAPER);
 
 	/** 
 	 * TODO control values consictancy ? 
 	 * TODO color hase RGB hexa string value ?
 	 */
 	public void loadConfig() {
-		if ( debugPaperSave ) Log.message(Paper.class.getSimpleName()+"::loadConfig() befor "+this.toString());
+		logger.debug("loadConfig() before "+this.toString());
 		paperLeft = Double.parseDouble(paperPreferenceNode.get(PREF_KEY_PAPER_LEFT, Double.toString(paperLeft)));
 		paperRight = Double.parseDouble(paperPreferenceNode.get(PREF_KEY_PAPER_RIGHT, Double.toString(paperRight)));
 		paperTop = Double.parseDouble(paperPreferenceNode.get(PREF_KEY_PAPER_TOP, Double.toString(paperTop)));
 		paperBottom = Double.parseDouble(paperPreferenceNode.get(PREF_KEY_PAPER_BOTTOM, Double.toString(paperBottom)));
-		paperMargin = Double.valueOf(paperPreferenceNode.get(PREF_KEY_PAPER_MARGIN, Double.toString(paperMargin)));
+		paperMargin = Double.parseDouble(paperPreferenceNode.get(PREF_KEY_PAPER_MARGIN, Double.toString(paperMargin)));
 		rotation = Double.parseDouble(paperPreferenceNode.get(PREF_KEY_ROTATION, Double.toString(rotation)));
 		int colorFromPref = Integer.parseInt(paperPreferenceNode.get(PREF_KEY_PAPER_COLOR, Integer.toString(paperColor.toInt())));
 		paperColor = new ColorRGB(colorFromPref);
 		rotationRef = 0;
 		centerX=Double.parseDouble(paperPreferenceNode.get(PREF_KEY_PAPER_CENTER_X, Double.toString(rotation)));
 		centerY=Double.parseDouble(paperPreferenceNode.get(PREF_KEY_PAPER_CENTER_Y, Double.toString(rotation)));
-		if ( debugPaperSave ) Log.message(Paper.class.getSimpleName()+"::loadConfig() after "+this.toString());
+		logger.debug("loadConfig() after "+this.toString());
 	}
 
 	public void saveConfig() {
-		if ( debugPaperSave ) Log.message(Paper.class.getSimpleName()+"::saveConfig() "+this.toString() );
+		logger.debug("saveConfig() "+this.toString() );
 		paperPreferenceNode.putDouble(PREF_KEY_PAPER_LEFT, paperLeft);
 		paperPreferenceNode.putDouble(PREF_KEY_PAPER_RIGHT, paperRight);
 		paperPreferenceNode.putDouble(PREF_KEY_PAPER_TOP, paperTop);
@@ -159,7 +152,7 @@ public class Paper implements PreviewListener {
 		saveConfig();
 	}
 
-	private void setPaperSizeNoSave(double width, double height, double shiftx, double shifty) {
+	public void setPaperSize(double width, double height, double shiftx, double shifty) {
 		this.centerX=shiftx;
 		this.centerY=shifty;
 		this.paperLeft = -width / 2;
@@ -167,11 +160,7 @@ public class Paper implements PreviewListener {
 		this.paperTop = height / 2;
 		this.paperBottom = -height / 2;		
 	}
-	public void setPaperSize(double width, double height, double shiftx, double shifty) {
-		   setPaperSizeNoSave(width, height, shiftx, shifty);
-		saveConfig();
-	}
-
+	
 	public Rectangle2D.Double getMarginRectangle() {
 		Rectangle2D.Double rectangle = new Rectangle2D.Double();
 		rectangle.x = getMarginLeft();

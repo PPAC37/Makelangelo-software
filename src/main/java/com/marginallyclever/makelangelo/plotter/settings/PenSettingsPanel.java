@@ -1,8 +1,6 @@
 package com.marginallyclever.makelangelo.plotter.settings;
 
-import javax.swing.JFrame;
 import com.marginallyclever.convenience.CommandLineOptions;
-import com.marginallyclever.convenience.log.Log;
 import com.marginallyclever.makelangelo.Translator;
 import com.marginallyclever.makelangelo.plotter.Plotter;
 import com.marginallyclever.makelangelo.select.SelectButton;
@@ -11,12 +9,11 @@ import com.marginallyclever.makelangelo.select.SelectDouble;
 import com.marginallyclever.makelangelo.select.SelectPanel;
 import com.marginallyclever.util.PreferencesHelper;
 
+import javax.swing.*;
+
 
 @Deprecated
-public class PenSettingsPanel extends SelectPanel/* implements ActionListener*/ {
-	/**
-	 * 
-	 */
+public class PenSettingsPanel extends SelectPanel {
 	private static final long serialVersionUID = 1L;
 
 	protected Plotter robot;
@@ -28,8 +25,6 @@ public class PenSettingsPanel extends SelectPanel/* implements ActionListener*/ 
 	protected SelectDouble penDown;
 	protected SelectDouble penZRate;
 
-	//protected SelectButton buttonTestUp;
-	//protected SelectButton buttonTestDown;
 	protected SelectButton buttonSave;
 	protected SelectButton buttonCancel;
 	
@@ -52,9 +47,8 @@ public class PenSettingsPanel extends SelectPanel/* implements ActionListener*/ 
 	    //add(buttonTestUp = new SelectButton("testUp",Translator.get("penToolTest")));
 	    add(penDown = new SelectDouble("down",Translator.get("penToolDown"),settings.getPenDownAngle()));
 	    //add(buttonTestDown = new SelectButton("testDown",Translator.get("penToolTest")));
-		add(selectPenDownColor = new SelectColor("colorDown",Translator.get("pen down color"),robot.getSettings().getPenDownColor(),this.getPanel()));
-		add(selectPenUpColor = new SelectColor("colorUp",Translator.get("pen up color"),robot.getSettings().getPenUpColor(),this.getPanel()));
-		finish();
+		add(selectPenDownColor = new SelectColor("colorDown",Translator.get("pen down color"),robot.getSettings().getPenDownColor(),this));
+		add(selectPenUpColor = new SelectColor("colorUp",Translator.get("pen up color"),robot.getSettings().getPenUpColor(),this));
 	}
 	
 	/*
@@ -93,7 +87,6 @@ public class PenSettingsPanel extends SelectPanel/* implements ActionListener*/ 
 	// TEST
 	
 	public static void main(String[] args) {
-		Log.start();
 		PreferencesHelper.start();
 		CommandLineOptions.setFromMain(args);
 		Translator.start();

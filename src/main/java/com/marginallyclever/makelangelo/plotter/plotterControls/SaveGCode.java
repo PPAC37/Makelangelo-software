@@ -1,20 +1,30 @@
 package com.marginallyclever.makelangelo.plotter.plotterControls;
 
-import java.io.*;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-
-import javax.swing.*;
-import javax.swing.filechooser.FileNameExtensionFilter;
-
-import org.apache.commons.io.FilenameUtils;
-
-import com.marginallyclever.convenience.log.Log;
 import com.marginallyclever.makelangelo.plotter.Plotter;
 import com.marginallyclever.makelangelo.turtle.Turtle;
 import com.marginallyclever.makelangelo.turtle.TurtleMove;
+import org.apache.commons.io.FilenameUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import javax.swing.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
+/**
+ * Save the {@link ProgramInterface} instruction buffer to a gcode file of the user's choosing.
+ * Relies on {@link MarlinPlotterInterface} to translate the instructions into gcode.
+ * @author Dan Royer
+ * @since 7.28.0
+ */
 public class SaveGCode {
+	private static final Logger logger = LoggerFactory.getLogger(SaveGCode.class);
+	
 	private final JFileChooser fc = new JFileChooser();
 
 	public SaveGCode() {
@@ -33,7 +43,7 @@ public class SaveGCode {
 		if (fc.showSaveDialog(parent) == JFileChooser.APPROVE_OPTION) {
 			String selectedFile = fc.getSelectedFile().getAbsolutePath();
 			String fileWithExtension = addExtension(selectedFile,((FileNameExtensionFilter)fc.getFileFilter()).getExtensions());
-			Log.message("File selected by user: "+fileWithExtension);
+			logger.debug("File selected by user: {}", fileWithExtension);
 			save(fileWithExtension,turtle,robot);
 		}
 	}
@@ -47,13 +57,14 @@ public class SaveGCode {
 	}
 	
 	private void save(String filename, Turtle turtle, Plotter robot) throws Exception {
-		Log.message("saving...");
+		logger.debug("saving...");
 		
 		try (Writer out = new OutputStreamWriter(new FileOutputStream(filename))) {
 
 			SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd 'at' HH:mm:ss z");
 			Date date = new Date(System.currentTimeMillis());
 			out.write("; " + formatter.format(date) + "\n");
+			// TODO MarlinPlotterInterface.getFindHomeString()?
 			out.write("G28\n");  // go home
 
 			boolean isUp = true;
@@ -88,6 +99,6 @@ public class SaveGCode {
 			if (!isUp) out.write(MarlinPlotterInterface.getPenUpString(robot) + "\n");
 		}
 
-		Log.message("done.");
+		logger.debug("done.");
 	}
 }
