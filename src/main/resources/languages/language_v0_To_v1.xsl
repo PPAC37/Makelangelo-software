@@ -38,14 +38,16 @@
     <xsl:output method="xml" indent="yes"  encoding="utf-8" omit-xml-declaration="no" 
                 standalone="no" doctype-system="language_v0.dtd" 
     />
+    <xsl:param name="timestamp"  /> 
+    <xsl:param name="src" /> 
     <!-- DONE : customize transformation rules 
          TODO : syntax recommendation http://www.w3.org/TR/xslt 
     -->
     <xsl:template match="/">        
-        <xsl:comment>Auto-generated file the ? (TODO add date/timestamp) from (TODO find a way to insert the name/path of the original file used...)</xsl:comment>   
-        <xsl:text>&#xd;&#xa;</xsl:text><!--Add a \r\n (as "&#xd;" is normaly a carriage return) and ( "&#xa;" is normaly a line feed / new line  ) -->        
+        <xsl:comment>Auto-generated file the ?<xsl:value-of select="$timestamp" /> (TODO add date/timestamp) from ?<xsl:value-of select="$src" /> (TODO find a way to insert the name/path of the original file used...)</xsl:comment>   
+        <xsl:text>&#xa;</xsl:text><!--Add a \r\n (as "&#xd;" is normaly a carriage return) and ( "&#xa;" is normaly a line feed / new line  ) -->        
         <xsl:comment>WARNING: modifications will be lost during the next generation.</xsl:comment>   
-        <xsl:text>&#xd;&#xa;</xsl:text>
+        <xsl:text>&#xa;</xsl:text>
         <language>
             <!--<xsl:copy-of select="//language/meta"></xsl:copy-of>-->        
             <meta>
