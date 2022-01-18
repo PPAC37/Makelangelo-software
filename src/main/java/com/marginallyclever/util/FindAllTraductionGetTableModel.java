@@ -18,8 +18,12 @@
 package com.marginallyclever.util;
 
 import com.marginallyclever.makelangelo.Translator;
+import static com.marginallyclever.util.FindAllTraductionGet.listFiles;
+import static com.marginallyclever.util.FindAllTraductionGet.searchAFile;
+import java.io.File;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.MatchResult;
 import javax.swing.JButton;
@@ -164,12 +168,12 @@ public class FindAllTraductionGetTableModel implements TableModel {
 	} else if (COL_KEY_ARGS_TRADUCTED.equals(columnKey)) {
 	    // 
 	    String tmpS = mr.argsMatch;
-	    if ( tmpS.startsWith("\"") && tmpS.endsWith("\"")){
-		return "\""+Translator.get(tmpS.substring(1, tmpS.length()-1))+"\"";
+	    if (tmpS.startsWith("\"") && tmpS.endsWith("\"")) {
+		return "\"" + Translator.get(tmpS.substring(1, tmpS.length() - 1)) + "\"";
 	    }
-	    
+
 	}
-	
+
 	//
 	return null;
     }
@@ -188,14 +192,70 @@ public class FindAllTraductionGetTableModel implements TableModel {
 	    if (obj != null && obj instanceof FindAllTraductionResult) {
 		mr = (FindAllTraductionResult) obj;
 	    }
-	    if (mr != null){
+	    //TODO to migrate in mr ...
+	    if (mr != null) {
 		System.out.printf("Not supported yet. TODO safely modifiy %s to change at line %d, %s in %s\n", mr.pSrc, mr.lineInFile, mr.argsMatch, aValue);
-		
+		String tmpS = mr.argsMatch;
+		if (tmpS.startsWith("\"") && tmpS.endsWith("\"")) {
+		    // hopping this is a simple string // TODO otherwise
+		    String justTheKey = tmpS.substring(1, tmpS.length() - 1);
+		    if (justTheKey.contains("\"")) {
+			System.out.printf("Not supported !!! (not a simple string). TODO safely modifiy %s to change at line %d, %s in %s\n", mr.pSrc, mr.lineInFile, mr.argsMatch, aValue);
+
+		    } else {
+			// so if this is initialy juste the key value 
+			String tmpR = (String) aValue;
+			// TODO start and end with " , do not containe other "
+			if (tmpR.startsWith("\"") && tmpR.endsWith("\"")) {
+			    String justTheKeyR = tmpR.substring(1, tmpR.length() - 1);
+			    if (justTheKeyR.contains("\"")) {
+				System.out.printf("Not supported !!! (not a simple string as remplacement ). TODO safely modifiy %s to change at line %d, %s in %s\n", mr.pSrc, mr.lineInFile, mr.argsMatch, aValue);
+
+			    } else {
+				// the key ok the remplamcent key ok 
+				// replace in the src code
+		//
+		FileContentReplacer.replaceAllPatternByTextInFile(mr.pSrc.toFile(), mr.lineInFile, mr.argsMatch, (String)aValue, null);
+		// replace in all trduction files ???
+
 		// TODO is this posible to "securly" modifiy a .java file with this ...
-	    // TODO but first we need to be sure that this is perfectly well done ...
-	    // TODO and then we may have to change the key/or create a new on in the traductions files ...
+		// TODO but first we need to be sure that this is perfectly well done ...
+		// TODO and then we may have to change the key/or create a new on in the traductions files ...
+					// TODO change the code src
+					
+				    try {
+					// change the key in the languges .xml
+					String baseDirToSearch = "src" + File.separator + "main" + File.separator + "resources" + File.separator + "languages";
+					System.out.printf("PDW=%s\n", new File(".").getAbsolutePath());
+					File srcDir = new File(".", baseDirToSearch);
+					List<Path> paths = listFiles(srcDir.toPath(), ".xml");
+					
+					final String pat="<key>"+justTheKey+"</key>";//mr.argsMatch
+					final String remp="<key>"+justTheKeyR+"</key>";
+					//final long linePos = mr.lineInFile;
+					//final File fSrc = mr.pSrc.toFile();
+					// search in the file ...
+					paths.forEach(x
+						-> {System.out.println(x.toString());
+						FileContentReplacer.replaceAllPatternByTextInFile(x.toFile(),-1 , pat, remp, null);
+					}
+					
+					);
+				    } catch (Exception e) {
+
+				    }
+			    }
+			}
+
+			
+		    }
+		    //return "\""+Translator.get(tmpS.substring(1, tmpS.length()-1))+"\"";
+		} else {
+		    System.out.printf("Not supported !!! (not a string). TODO safely modifiy %s to change at line %d, %s in %s\n", mr.pSrc, mr.lineInFile, mr.argsMatch, aValue);
+
+		}
+		
 	    }
-	    
 
 	}
 	//throw new UnsupportedOperationException("Not supported yet."); // Generated from nbfs://nbhost/SystemFileSystem/Templates/Classes/Code/GeneratedMethodBody
@@ -204,17 +264,16 @@ public class FindAllTraductionGetTableModel implements TableModel {
     //
     //
     //
-    
     protected void fireUpdateTableModel() {
-        for (TableModelListener tml : arrayListTableModelListener) {
-            tml.tableChanged(new TableModelEvent(this));
-        }
+	for (TableModelListener tml : arrayListTableModelListener) {
+	    tml.tableChanged(new TableModelEvent(this));
+	}
     }
 
     protected void fireUpdateTableModel(int row) {
-        for (TableModelListener tml : arrayListTableModelListener) {
-            tml.tableChanged(new TableModelEvent(this, row));
-        }
+	for (TableModelListener tml : arrayListTableModelListener) {
+	    tml.tableChanged(new TableModelEvent(this, row));
+	}
     }
     //
     // ? Notifieur / Notifié pattern implementation.
@@ -222,9 +281,12 @@ public class FindAllTraductionGetTableModel implements TableModel {
     private ArrayList<TableModelListener> arrayListTableModelListener = new ArrayList<>();
 
     /**
-     * When a JTable use a TableModel normaly the JTable register a TableModelListener.
-     * This allow later to fireUpdate TableModelChange to the TableModelListener JTable when the table model have change. (so the JTable reload / refresh )
-     * @param l 
+     * When a JTable use a TableModel normaly the JTable register a
+     * TableModelListener. This allow later to fireUpdate TableModelChange to
+     * the TableModelListener JTable when the table model have change. (so the
+     * JTable reload / refresh )
+     *
+     * @param l
      */
     @Override
     public void addTableModelListener(TableModelListener l) {
