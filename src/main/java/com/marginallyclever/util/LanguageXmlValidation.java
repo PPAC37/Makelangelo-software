@@ -18,6 +18,7 @@
 package com.marginallyclever.util;
 
 import com.marginallyclever.makelangelo.Translator;
+import com.marginallyclever.makelangelo.TranslatorLanguage;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -26,7 +27,13 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.net.URL;
 import java.nio.file.Path;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
+import java.util.SortedMap;
+import java.util.SortedSet;
+import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Stream;
@@ -91,7 +98,148 @@ public class LanguageXmlValidation {
 	} catch (Exception ex) {
 	    Logger.getLogger(LanguageXmlValidation.class.getName()).log(Level.SEVERE, null, ex);
 	}
+	
+	System.out.println("");
+	String[] deletedKeyTab = {
+	    //https://github.com/MarginallyClever/Makelangelo-software/commit/0b01453acdacfffe4851bebf40dfc2a02357e61a
+	    "SetHome",
+	    "GoHome",
+	    "FindHome",
+	    "DisengageMotors",
+	    "EngageMotors",
+	    //https://github.com/MarginallyClever/Makelangelo-software/commit/e50290298190a4b747751f356da0922366fc2c8c#diff-7254ebb4a67247586f3497b7148165f8330c029f478bf6d63ff0b4e26fa75dc2
+	    "FileTypeGCode",
+	    "FileTypeDXF",
+	    "FileTypeScratch2",
+	    //// "FileTypeScratch3",// come back later : https://github.com/MarginallyClever/Makelangelo-software/commit/39d338f571f8ee974273470e945da5283e338c61
+	    "FileTypeSVG",
+	    // (renamed but value change ... so to del ) https://github.com/MarginallyClever/Makelangelo-software/commit/b84463651e632d92a3d23fc73d62b864b2fa2626
+	    "ChangeToolPrefix",
+	    "ChangeToolPostfix",
+	    //https://github.com/MarginallyClever/Makelangelo-software/commit/e9f859b16e980cd56374a1609d1d441ae2142e10
+	    "Unpause",
+	    "FindHome",
+	    "MenuSaveGCODEAs",
+	    "",
+	    "",
+	    "",
+	};
+	SortedSet<String> kb_deletedKey = new TreeSet<>();
+	for ( String k : deletedKeyTab){
+	    kb_deletedKey.add(k);
+	}
+	
+	// TODO multiple rename case and posible cyclic  ? A -> b -> C -> A
+	SortedMap<String,String> kb_renamedKey = new TreeMap<>();
+	//https://github.com/MarginallyClever/Makelangelo-software/commit/9463279394b671ae0b3d9475f9678d283c026fac
+	kb_renamedKey.put("PaperWidth","PaperSettings.PaperWidth");
+	kb_renamedKey.put("PaperHeight","PaperSettings.PaperHeight");
+	kb_renamedKey.put("OpenControls","RobotMenu.OpenControls");
+	kb_renamedKey.put("paper color","PaperSettings.PaperColor");
+	//?? https://github.com/MarginallyClever/Makelangelo-software/blame/6d77ba26fffc293020d74aefcb1d337bf9e24e71/src/main/resources/languages/english.xml
+	//??kb_renamedKey.put("MenuSaveGCODEAs","RobotMenu.SaveGCode");
+	kb_renamedKey.put("SaveGCode","RobotMenu.SaveGCode");
+	//
+	kb_renamedKey.put("converterWanderCMYK","ConverterWanderCMYK");
+	kb_renamedKey.put("spiralToCorners","Spiral.toCorners");
+	kb_renamedKey.put("SpiralPulseSpacing","SpiralPulse.spacing");
+	kb_renamedKey.put("SpiralPulseHeight","SpiralPulse.height");
+	kb_renamedKey.put("Sandy Noble Style","SandyNoble.title");
+	//https://github.com/MarginallyClever/Makelangelo-software/commit/9791112bb72e1a0d8779d43a6466eaed9a7cb482
+	kb_renamedKey.put("MenuGraphicsPenUp","GFXPreferences.showPenUp");
+	kb_renamedKey.put("MenuGraphicsAntialias","GFXPreferences.antialias");
+	kb_renamedKey.put("MenuGraphicsSpeedVSQuality","GFXPreferences.speedVSQuality");
+	kb_renamedKey.put("MenuGraphicsDrawWhileRunning","GFXPreferences.showAllWhileDrawing");
+	kb_renamedKey.put("MenuPreview","MenuView");
+	kb_renamedKey.put("ZoomIn","MenuView.zoomIn");
+	kb_renamedKey.put("ZoomOut","MenuView.zoomOut");
+	kb_renamedKey.put("ZoomFit","MenuView.zoomFit");
+	//https://github.com/MarginallyClever/Makelangelo-software/commit/0b01453acdacfffe4851bebf40dfc2a02357e61a
+	kb_renamedKey.put("PenUp","JogInterface.PenUp");
+	kb_renamedKey.put("PenDown","JogInterface.PenDown");
+	//https://github.com/MarginallyClever/Makelangelo-software/commit/e9f859b16e980cd56374a1609d1d441ae2142e10
+	kb_renamedKey.put("Pause","PlotterControls.Pause");
+	kb_renamedKey.put("SaveGCode","PlotterControls.SaveGCode");
+	kb_renamedKey.put("Rewind","PlotterControls.Rewind");
+	kb_renamedKey.put("Play","PlotterControls.Play");	
+	kb_renamedKey.put("Step","PlotterControls.Step");
+	//https://github.com/MarginallyClever/Makelangelo-software/commit/021b83ec5d1134ad111ebdf2bbd4d4452c511aa5 // arf en to all ...
+	kb_renamedKey.put("KochCurveName","KochTreeName");	
+	kb_renamedKey.put("Diameter","AdjustPulleySize");	//?
+	kb_renamedKey.put("MenuHilbertCurve","HilbertCurveName");//?
+	//FlipForGlass
+	//FileNotOpened
+	//
+//	kb_renamedKey.put("","");	
+//	kb_renamedKey.put("","");	
+//	kb_renamedKey.put("","");
+	//
+//	kb_renamedKey.put("","");	
+//	kb_renamedKey.put("","");	
+//	kb_renamedKey.put("","");
+	
+	// Special case fusion
+	/*AboutHTMLAfterVersionNumber + "%VERSION%" + AboutHTMLBeforeVersionNumber -> AboutHTML
+https://github.com/MarginallyClever/Makelangelo-software/commit/7605a228af378ff724c25162587be90fb65993fd*/
+	
+	System.out.println("");
+	try{
+	    String oldLanguageXmlFilePath = "/home/q6/tmp_git_try/PPAC37/Makelangelo-software/target/classes/languages/french_893a98a573a4e07b86b2704f50d380fa11602440.xml";
+	    File fsrc = new File ( oldLanguageXmlFilePath);
 
+	    xmlValidationWithXsd(fsrc.toString());
+	      // Let try with what we have (but this have to be redone cause i whant the hint ...)
+	    TranslatorLanguage tlOld = new TranslatorLanguage();
+	    tlOld.loadFromString(oldLanguageXmlFilePath);
+	    //
+	    String actualEnglishXmlPath ="/home/q6/tmp_git_try/PPAC37/Makelangelo-software/target/classes/languages/english.xml";
+	    xmlValidationWithXsd(actualEnglishXmlPath);
+	    
+	    TranslatorLanguage tlActualEng = new TranslatorLanguage();
+	    tlActualEng.loadFromString(actualEnglishXmlPath);
+	    
+	    Map<String, String> mapOld = tlOld.getStrings();
+	    Map<String, String> mapRef = tlActualEng.getStrings();
+	    
+	    SortedSet<String> ssKeyToKeep = new TreeSet<>();
+	    SortedSet<String> ssKeyToResolve = new TreeSet<>();
+	    for ( String kOld : mapOld.keySet()){
+		if ( mapRef.keySet().contains(kOld)){
+		    // key to keep
+		    ssKeyToKeep.add(kOld);
+		}else{
+		    // not containe in actual eng xml ...
+		    // have to determine if a del renamed or fusined key ...
+		    //System.out.println(" ? "+kOld);
+		    ssKeyToResolve.add(kOld);
+		}
+	    }
+	    //
+	    System.out.printf("found %d key , %d known, %d to resolv using english.xml as reference.\n",mapOld.keySet().size(), ssKeyToKeep.size(),ssKeyToResolve.size());
+	    
+	    Iterator<String> kToResolvIterator = ssKeyToResolve.iterator();
+	    while ( kToResolvIterator.hasNext()){
+		String k = kToResolvIterator.next();
+		
+		if ( kb_deletedKey.contains(k)){
+		    System.out.println(" DEL "+k);
+		}else if ( kb_renamedKey.keySet().contains(k) ){
+		    System.out.println(" REN "+k+" -> "+kb_renamedKey.get(k));
+		} else{
+		    System.out.println(" ??? "+k);
+		}
+		// TODO have a knowledge base on what to do .. .maybe to keep maybe to drop maybe to fusion ...
+		
+		// deleted -> drop 
+		
+		// renamed -> 
+		
+		// fusionned -> ...
+	    }
+	    
+	}catch (Exception e){
+	    e.printStackTrace();
+	}
     }
 
     /**
@@ -100,8 +248,12 @@ public class LanguageXmlValidation {
      */
     public static void xmlValidationWithXsd(String languageFilePath) throws Exception {
 	//URL schemaFile = new URL("http://host:port/filename.xsd");
+	
+	//
 	URL schemaFile = LanguageXmlValidation.class.getResource("/languages/language.xsd");
-	System.out.println("using xsd : "+schemaFile.toString());
+	//URL schemaFile = LanguageXmlValidation.class.getResource("/languages/language_v0.dtd");//ko
+	
+	//System.out.println("using xsd : "+schemaFile.toString());
 	// webapp example xsd: 
 	// URL schemaFile = new URL("http://java.sun.com/xml/ns/j2ee/web-app_2_4.xsd");
 	// local file example:
@@ -114,9 +266,9 @@ public class LanguageXmlValidation {
 	    Schema schema = schemaFactory.newSchema(schemaFile);
 	    Validator validator = schema.newValidator();
 	    validator.validate(xmlFile);
-	    System.out.println(xmlFile.getSystemId() + " is valid");
+	    System.out.println(String.format("[ %5s ] %s","valid",xmlFile.getSystemId()));
 	} catch (SAXException e) {
-	    System.out.println(xmlFile.getSystemId() + " is NOT valid reason:\n" + e);
+	    System.out.println(String.format("[ %5s ] %s\n%s","error",xmlFile.getSystemId() , e));
 	   // e.printStackTrace();
 	} catch (IOException e) {
 	    e.printStackTrace();
