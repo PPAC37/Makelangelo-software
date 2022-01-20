@@ -247,18 +247,8 @@ TODO study case code change / xml rework / implication (no back compatibility )
 	</string>
 
 	<string>
-		<key>FileTypeGCode</key>
-		<value>ODEGCay (ngc)</value>
-		<hint>file open dialog</hint>
-	</string>
-	<string>
 		<key>FileTypeImage</key>
 		<value>Imageyay (jpg/bmp/png/gif)</value>
-		<hint>file open dialog</hint>
-	</string>
-	<string>
-		<key>FileTypeDXF</key>
-		<value>DXF R12 (dxf)</value>
 		<hint>file open dialog</hint>
 	</string>
 
@@ -329,16 +319,6 @@ TODO study case code change / xml rework / implication (no back compatibility )
 		<key>InvalidTool</key>
 		<value>equestedRay invalidyay ooltay #</value>
 		<hint>warning message</hint>
-	</string>
-	<string>
-		<key>ChangeToolPrefix</key>
-		<value>easePlay eparepray</value>
-		<hint>tool change prompt. keep the space at the end.</hint>
-	</string>
-	<string>
-		<key>ChangeToolPostfix</key>
-		<value>andyay ickclay anyyay uttonbay otay ontinuecay.</value>
-		<hint>tool change prompt. keep the space at the start.</hint>
 	</string>
 
 	<string>
@@ -825,6 +805,17 @@ to check yourself.</value>
 		<value>Estimatedyay imetay eftlay:</value>
 		<hint>time machine will be drawing</hint>
 	</string>
+
+	<string>
+		<key>DisengageMotors</key>
+		<value>isengageDay</value>
+		<hint>Disengage Button on manual driving dialog</hint>
+	</string>
+
+	<!-- Because the version string is declared in Java, AboutHTMLBeforeVersionNumber 
+		and AboutHTMLAfterVersionNumber are used to dynamically build the HTML for 
+		the about message dialog using the version string. This is why there is not
+		one big CDATA html blob. -->
 
 	<string>
 		<key>AboutHTML</key>
