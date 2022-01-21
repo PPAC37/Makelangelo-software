@@ -30,9 +30,9 @@ public class PlotterSettings implements Serializable {
 	private double limitTop;
 	
 	// speed control
-	private double travelFeedRate;
-	private double drawFeedRate;
-	private double maxAcceleration;
+	private double travelFeedRate = MarlinSimulation.MAX_FEEDRATE;
+	private double drawFeedRate = MarlinSimulation.MAX_FEEDRATE;
+	private double maxAcceleration = MarlinSimulation.MAX_ACCELERATION;
 
 	private ColorRGB paperColor;
 
@@ -40,10 +40,10 @@ public class PlotterSettings implements Serializable {
 	private ColorRGB penDownColor;
 	private ColorRGB penUpColor;
 
-	private double penDiameter; // mm, >0
-	private double penUpAngle; // servo angle (degrees,0...180)
-	private double penDownAngle; // servo angle (degrees,0...180)
-	private double penLiftTime; // ms
+	private double penDiameter=0.8; // mm, >0
+	private double penUpAngle=90; // servo angle (degrees,0...180)
+	private double penDownAngle=25; // servo angle (degrees,0...180)
+	private double penLiftTime=50; // ms
 
 	/**
 	 * top left, bottom center, etc...
@@ -145,6 +145,10 @@ public class PlotterSettings implements Serializable {
 		return robotUID;
 	}
 
+	protected void setRobotUID(long robotUID) {
+		this.robotUID = robotUID;
+	}
+
 	public boolean isRegistered() {
 		return isRegistered;
 	}
@@ -186,14 +190,13 @@ public class PlotterSettings implements Serializable {
 
 	protected void loadPenConfig(Preferences prefs) {
 		prefs = prefs.node("Pen");
-		setPenDiameter(Double.valueOf(prefs.get("diameter", Double.toString(getPenDiameter()))));
-		setPenLiftTime(Double.valueOf(prefs.get("z_rate", Double.toString(getPenLiftTime()))));
-		setPenDownAngle(Double.valueOf(prefs.get("z_on", Double.toString(getPenDownAngle()))));
-		setPenUpAngle(Double.valueOf(prefs.get("z_off", Double.toString(getPenUpAngle()))));
-		// tool_number =
-		// Integer.parseInt(prefs.get("tool_number",Integer.toString(tool_number)));
-		travelFeedRate = Double.valueOf(prefs.get("feed_rate", Double.toString(MarlinSimulation.DEFAULT_FEEDRATE)));
-		drawFeedRate = Double.valueOf(prefs.get("feed_rate_current", Double.toString(MarlinSimulation.DEFAULT_FEEDRATE)));
+		setPenDiameter(Double.valueOf(prefs.get("diameter", Double.toString(penDiameter))));
+		setPenLiftTime(Double.valueOf(prefs.get("z_rate", Double.toString(penLiftTime))));
+		setPenDownAngle(Double.valueOf(prefs.get("z_on", Double.toString(penDownAngle))));
+		setPenUpAngle(Double.valueOf(prefs.get("z_off", Double.toString(penUpAngle))));
+		setTravelFeedRate(Double.valueOf(prefs.get("feed_rate", Double.toString(travelFeedRate))));
+		setDrawFeedRate(Double.valueOf(prefs.get("feed_rate_current", Double.toString(drawFeedRate))));
+		// tool_number = Integer.valueOf(prefs.get("tool_number",Integer.toString(tool_number)));
 
 		int r, g, b;
 		r = prefs.getInt("penDownColorR", penDownColor.getRed());
@@ -312,7 +315,6 @@ public class PlotterSettings implements Serializable {
 	 * @return height of machine's drawing area, in mm.
 	 */
 	private double getHeight() {
-		// TODO Auto-generated method stub
 		return 1000; // mm
 	}
 
@@ -320,7 +322,6 @@ public class PlotterSettings implements Serializable {
 	 * @return width of machine's drawing area, in mm.
 	 */
 	private double getWidth() {
-		// TODO Auto-generated method stub
 		return 650; // mm
 	}
 
@@ -332,24 +333,24 @@ public class PlotterSettings implements Serializable {
 		return penDownColor;
 	}
 
-	public void setPenDownColorDefault(ColorRGB arg0) {
-		penDownColorDefault = arg0;
+	public void setPenDownColorDefault(ColorRGB color) {
+		penDownColorDefault = color;
 	}
 
-	public void setPenDownColor(ColorRGB arg0) {
-		penDownColor = arg0;
+	public void setPenDownColor(ColorRGB color) {
+		penDownColor = color;
 	}
 
-	public void setPenUpColor(ColorRGB arg0) {
-		penUpColor = arg0;
+	public void setPenUpColor(ColorRGB color) {
+		penUpColor = color;
 	}
 
 	public ColorRGB getPenUpColor() {
 		return penUpColor;
 	}
 
-	public void setPenDiameter(double d) {
-		penDiameter = d;
+	public void setPenDiameter(double diameter) {
+		penDiameter = diameter;
 	}
 
 	public double getPenDiameter() {
@@ -381,12 +382,18 @@ public class PlotterSettings implements Serializable {
 	}
 
 	public boolean canChangeMachineSize() {
-		// TODO Auto-generated method stub
 		return false;
 	}
 
 	public boolean canAccelerate() {
-		// TODO Auto-generated method stub
 		return false;
+	}
+
+	public void setStartingPositionIndex(int startingPositionIndex) {
+		this.startingPositionIndex = startingPositionIndex;
+	}
+
+	public int getStartingPositionIndex() {
+		return this.startingPositionIndex;
 	}
 }
