@@ -1,4 +1,8 @@
 # 
+
+https://github.com/jpomykala/awesome-i18n
+
+
 Traduction in https://github.com/MarginallyClever/Makelangelo-software
 Makelangelo version 2.28... ( may be subject to change for specifi version )
 

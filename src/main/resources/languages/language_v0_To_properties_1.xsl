@@ -30,11 +30,6 @@
         As xml engine ( can have diffrent implementation/comportement like xalan vs .NETxmlEmbed vs ... ) this may not work ...
         https://stackoverflow.com/questions/723226/producing-a-new-line-in-xslt
         (TODO : Im using NetBeans 12.6 xml commands via toolsbar icons (so i even dont actualy know what xml engine i use ... )
-        
-        
-        
-         https://www.w3schools.com/xml/xsl_elementref.asp
-         https://www.w3schools.com/xml/xsl_functions.asp
 -->
 
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
