@@ -16,7 +16,7 @@ import com.marginallyclever.util.PreferencesHelper;
  */
 public class GFXPreferences {
 	static private SelectPanel panel;
-	static private SelectBoolean showPenUp;
+	static private SelectBoolean showPenUp;// TODO as an action ?
 	static private SelectBoolean antialias;
 	static private SelectBoolean speedOverQuality;
 	static private SelectBoolean showAllWhileDrawing;

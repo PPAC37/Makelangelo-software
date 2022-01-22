@@ -631,12 +631,13 @@ public final class Makelangelo {
 		buttonZoomToFit.addActionListener((e) -> camera.zoomToFit(myPaper.getPaperWidth(),myPaper.getPaperHeight()));
 		menu.add(buttonZoomToFit);
 
+		//TODO as an action ?
 		JCheckBoxMenuItem checkboxShowPenUpMoves = new JCheckBoxMenuItem(Translator.get("GFXPreferences.showPenUp"),GFXPreferences.getShowPenUp());
 		checkboxShowPenUpMoves.addActionListener((e) -> {
 			boolean b = GFXPreferences.getShowPenUp();
 			GFXPreferences.setShowPenUp(!b);
 		});
-		GFXPreferences.addListener((e)->{
+		GFXPreferences.addListener((e)->{// to implement ActionListener PropertyChange ?
 			checkboxShowPenUpMoves.setSelected ((boolean)e.getNewValue());
 		});
 		menu.add(checkboxShowPenUpMoves);
