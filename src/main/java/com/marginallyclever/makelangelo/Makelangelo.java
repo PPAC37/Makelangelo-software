@@ -140,6 +140,9 @@ public final class Makelangelo {
 		
 		logger.debug("Starting virtual camera...");
 		camera = new Camera();
+		
+		
+		//		   checkSharingPermission();
 	}
 	
 	private void startRobot() {
@@ -204,7 +207,7 @@ public final class Makelangelo {
 		Preferences preferences = PreferencesHelper.getPreferenceNode(PreferencesHelper.MakelangeloPreferenceKey.METRICS);
 		String v = preferences.get(SHARING_CHECK_STRING,"0");
 		int comparison = VERSION.compareTo(v);
-		if(comparison!=0) {
+		if(true || comparison!=0) {
 			preferences.put(SHARING_CHECK_STRING,VERSION);
 			int dialogResult = JOptionPane.showConfirmDialog(mainFrame, Translator.get("collectAnonymousMetricsOnUpdate"),"Sharing Is Caring",JOptionPane.YES_NO_OPTION);
 			MetricsPreferences.setAllowedToShare(dialogResult == JOptionPane.YES_OPTION);
