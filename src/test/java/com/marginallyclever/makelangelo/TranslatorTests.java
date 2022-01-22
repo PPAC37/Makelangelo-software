@@ -66,6 +66,9 @@ public class TranslatorTests {
 		//Pre requis
 		Translator.start();
 		
+		//TODO etre sur que le langage en cours (utilisé pour avoir les traduction) et bien le bon (ici on cherche a valider resources/languages/englis.xml et pas un autre.)
+		
+		//  tout cela pour avoir le chemin vers les fichiers sources . (TODO voir si il n'y a pas plus simple/générique)
 		String baseDirToSearch = "src" + File.separator + "main" + File.separator + "java";
 		System.out.printf("PDW=%s\n", new File(".").getAbsolutePath());
 		File srcDir = new File(".", baseDirToSearch);
@@ -75,10 +78,10 @@ public class TranslatorTests {
 		    ex.printStackTrace();
 		}
 
-		
+		// recherche dans les fichier sources .java // currently search the comments too ... (TODO ? boolean not in comment )
 		Map<FindAllTraductionResult, Path> matchTraductionGetInAllSrcJavaFiles = matchTraductionGetInAllSrcJavaFiles(srcDir);
 		
-		// assert the test test something 
+		// assert the test test something ? (il devrait y avoir des match sinon c'est louche ... )
 		assertTrue(!matchTraductionGetInAllSrcJavaFiles.isEmpty(), "Invalide test : No match ... maybe no source files ... or a refactoring that have invalide the pattern used to search ?");
 
 		// find the missing simple "key" found  ...
@@ -92,6 +95,9 @@ public class TranslatorTests {
 //			System.out.printf(" used in : \"%s\" line %d\n", tr.pSrc, tr.lineInFile);
 //		    }
 //		}
+
+		// output on System.out xml ... TODO? find a better way ( return a StringBuilder or output stream as parameters) 
+		// TODO ? have to be <pre> encapsuled ?
 		FindAllTraductionXMLGenerator.generatePartialXmlFileWithMissingKey(groupIdenticalMissingKey);
 		
 		// validate or not the test. (succes if no missing keys found)

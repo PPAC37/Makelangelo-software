@@ -40,10 +40,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * An attempt to find the Tratuction.get(...) arguments in the source code. To
+ * An attempt to find the Tratuction.get(...) arguments in the source code. 
+ * <br>To
  * deduce when possible (args = simple string value) the keys used and therefore
  * missing in the translation file in use.
- *
+ * <br>
+ * N.B. : the actual implementation normaly also get in comments match ( TODO ? if posible a boolean to tweek the regexp ? change the way to match ? to omit if in comments)
+ * 
  * @author PPAC37
  */
 public class FindAllTraductionGet {
@@ -131,11 +134,27 @@ public class FindAllTraductionGet {
     }
 
     public static Map<FindAllTraductionResult, Path> matchTraductionGetInAllSrcJavaFiles(File srcDir) {
+	// <code>Translator\s*\.\s*get\s*\(([^\)]*)\)</code>
 	// "Translator\\s*\\.\\s*get\\s*\\(([^\\)]*)\\)" is a patternt to match and it define a group "(...)". "[^\\)]*" could be interpreted as any char that is not a ')'.
 	// notice the "\" to despecialize some special char in the regexp like '\(' and also tu specify specific char like "\s"
 	// the "\\" is cause we are in a string to finaly have a '\' ... (yes this is confusing ... )
-	// 
-	return matchPatternInAllFilesThatHaveAFilenameThatEndWithInADir(srcDir, ".java", "Translator\\s*\\.\\s*get\\s*\\(([^\\)]*)\\)");
+	
+	String patternToFind_TraductionGet = "Translator\\s*\\.\\s*get\\s*\\(([^\\)]*)\\)";//v0 do the job but not perfecte to get all the args if nested ')'
+	
+	
+	//
+	//<code>|(['\"])(?:(?!\1|\\).|\\.)*\1|\/\/[^\n]*(?:\n|$)|\/\*(?:[^*]|\*(?!\/))*\*\/</code> from https://stackoverflow.com/questions/25425755/regular-expression-to-find-non-commented-java-lines
+	String orPatternToAppendNotToFindIfCommented = "|(['\\\"])(?:(?!\\1|\\\\).|\\\\.)*\\1|\\/\\/[^\\n]*(?:\\n|$)|\\/\\*(?:[^*]|\\*(?!\\/))*\\*\\/";
+	
+	boolean notInComment = true;
+	if ( notInComment){
+	    patternToFind_TraductionGet+= orPatternToAppendNotToFindIfCommented;
+	}
+
+	// online regexp tools debug : 
+	// https://regex101.com/r/IF04t0/1
+	// https://www.debuggex.com/r/oedqjZVmLhBtqPaa
+	return matchPatternInAllFilesThatHaveAFilenameThatEndWithInADir(srcDir, ".java", patternToFind_TraductionGet);
     }
 
     /**
@@ -143,7 +162,11 @@ public class FindAllTraductionGet {
      * implementation.
      *
      * N.B. : the pattern have to have 1 group ...
-     *
+     * <br>
+     * // online regexp tools debug : 
+	// https://regex101.com/r/IF04t0/1
+	// https://www.debuggex.com/r/oedqjZVmLhBtqPaa
+	* <br>
      * // See pattern regexp (fr)
      * https://cyberzoide.developpez.com/tutoriels/java/regex/ // normaly '('
      * and ')' are used to define group in patern matcher so to match a real '('
@@ -194,15 +217,20 @@ public class FindAllTraductionGet {
 	    Pattern pattern = Pattern.compile(regexp);
 
 	    // not line by line ... not used ... only to vérifie if we miss some on multilines
+	    // TODO append |(\n) to the pattern and at eatch Match count the /n in group(0) to update the line num ?
+	    int lastLineNum = 0;
 	    int countMatchNotLineByLine = 0;
 	    try ( Scanner sc = new Scanner(x)) {
 		List<MatchResult> n = sc.findAll(pattern)
 			.collect(Collectors.toList());
 		if (!n.isEmpty()) {
 		    for (MatchResult mr : n) {
+			
+			if ( mr.groupCount()>0 && mr.group(1) != null)
 			countMatchNotLineByLine++;
 			// Can we get the line num ? currently in this implementation we have the car pos in the file/stream ...
 			//	logger.debug(" %-50s in {} at sart:{} end:{}", mr.group(1), mr.group(), mr.start(), mr.end());
+			lastLineNum += mr.group(0).split("\n").length;// TODO ??? ssi pattern with |(/n) ...
 		    }
 		}
 	    }
@@ -221,8 +249,10 @@ public class FindAllTraductionGet {
 			//logger.debug("match group(1) : \"{}\" in \"{}\" line:{} char:{}", m.group(1), baseDir.relativize(x), lineNum, m.start(1));
 		    }
 		    if (m.groupCount() >= 1) {
+			if ( m.group(1) != null ){ // normaly null if in comments if using the notInComment regexp...
 			FindAllTraductionResult res = new FindAllTraductionResult(m.group(1), lineNum, m.start(1), x);
 			mapMatchResultToFilePath.put(res, x);
+			}
 		    } else {
 			// no group found ? bad regexp pattern with no group ? 
 		    }
@@ -230,7 +260,7 @@ public class FindAllTraductionGet {
 	    }
 	    // warm if we miss some match by doing line by line ?
 	    if (countMatchNotLineByLine != mapMatchResultToFilePath.size()) {
-		logger.error("Miss {} match in multilines ... ", countMatchNotLineByLine - mapMatchResultToFilePath.size());
+		logger.error("Miss {} match in multilines ... {}", countMatchNotLineByLine - mapMatchResultToFilePath.size(),x);
 	    }
 	} catch (IOException ex) {
 	    logger.error("{}", ex.getMessage(), ex);
