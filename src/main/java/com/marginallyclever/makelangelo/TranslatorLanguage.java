@@ -337,4 +337,13 @@ public class TranslatorLanguage {
 	public String getAuthor() {
 		return author;
 	}
+	
+	//
+	// PPAC37 : Needed by TranslatorTableModel and LanguageXmlValidation
+	//
+
+    public Map<String, String> getStrings() {
+	return strings;
+    }
+	
 }

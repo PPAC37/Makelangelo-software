@@ -7,7 +7,9 @@
     Description:
         A try to transforme a language .xml DTD language "v0" file 
         to a language .xml file DTD language "v1" 
-        ( using the key in an ID to get xml validation unique key vérification)        
+        ( using the key in an ID to get xml validation unique key vérification)   
+             
+        (n.b. : currently using XSLT v1.0 engine ( some functions only in XSLT 2.0 engine (like fn:replace,  fn:datetime, ... )
         
         BUG : converte CDATA contente.
         
@@ -32,6 +34,12 @@
         
         Documentation :
         (fr) https://analyse-innovation-solution.fr/publication/fr/xslt/tutoriel-xslt-bases
+         
+        Documentation de référence : 
+        (en) https://www.w3schools.com/xml/xsl_elementref.asp
+        (en) https://www.w3schools.com/xml/xsl_functions.asp 
+        (en) syntax recommendation http://www.w3.org/TR/xslt 
+        
 -->
 
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0" >
@@ -40,11 +48,11 @@
     />
     <xsl:param name="timestamp"  /> 
     <xsl:param name="src" /> 
-    <!-- DONE : customize transformation rules 
-         TODO : syntax recommendation http://www.w3.org/TR/xslt 
-    -->
+    
+    <!--     -->
     <xsl:template match="/">        
-        <xsl:comment>Auto-generated file the ?<xsl:value-of select="$timestamp" /> (TODO add date/timestamp) from ?<xsl:value-of select="$src" /> (TODO find a way to insert the name/path of the original file used...)</xsl:comment>   
+        <xsl:comment>Auto-generated file the ?<xsl:value-of select="$timestamp" /> from ?<xsl:value-of select="$src" /> </xsl:comment>   
+        <xsl:comment>// Charset test set : é ù ö (TODO to remove juste to control no change / good charset(s) used for input and output in xml transform impementation or it can be your editor default charset to use (like with netbean, .properties file ar open in ??? force use project charset encoding) )</xsl:comment>   
         <xsl:text>&#xa;</xsl:text><!--Add a \r\n (as "&#xd;" is normaly a carriage return) and ( "&#xa;" is normaly a line feed / new line  ) -->        
         <xsl:comment>WARNING: modifications will be lost during the next generation.</xsl:comment>   
         <xsl:text>&#xa;</xsl:text>
@@ -64,9 +72,17 @@
                 <xsl:variable name="key_for_id" select="key" />
                 <string>
                     <xsl:attribute name="id">
-                        <xsl:value-of select="$key_for_id" />
+                        <xsl:value-of select="translate($key_for_id, ' *', '__')" />
+                        <!--
+<xsl:value-of select="$key_for_id" />
+                        --> 
                     </xsl:attribute>    
                     <!--
+                    
+                      <xsl:variable name="temp" select="value" />
+            <xsl:value-of select="translate($temp, '&#xa;', '')" />
+            
+            
                     <key><xsl:value-of select="$key_for_id" /></key>                         
                     <value><xsl:value-of select="value" /></value>         
                     <hint><xsl:value-of select="hint" /></hint>

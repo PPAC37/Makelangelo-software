@@ -153,7 +153,12 @@ public final class Translator {
 		}
 	}
 
-	private static Stream<Path> getLanguagePaths() throws Exception {
+	/**
+	 * PPAC37 : Set public for the need of LanguageXmlValidation
+	 * @return
+	 * @throws Exception 
+	 */
+	public static Stream<Path> getLanguagePaths() throws Exception {
 		URI uri = Translator.class.getClassLoader().getResource(WORKING_DIRECTORY).toURI();
 		logger.trace("Looking for translations in {}", uri.toString());
 		
@@ -197,7 +202,7 @@ public final class Translator {
 			logger.debug("Found {} // {} ", actualFilename,lang.getName()); // currenty a english.xml can have a language name value "dutch" ... this is disturbing not to be aware of that.
 		} catch(Exception e) {
 			logger.error("Failed to load {}", actualFilename);
-			e.printStackTrace();
+			e.printStackTrace();// added by PPAC37. TODO should be remove after having review some issues.
 			// if the xml file is invalid then an exception can occur.
 			// make sure lang is empty in case of a partial-load failure.
 			lang = new TranslatorLanguage();
