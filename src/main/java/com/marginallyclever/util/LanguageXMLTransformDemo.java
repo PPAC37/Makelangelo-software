@@ -39,7 +39,7 @@ import org.apache.commons.io.FilenameUtils;
 /**
  * To do some xml transformation.
  * <br>
- * Hopping this can be usefull to help traductors. *
+ * Hopping this can be usefull to help traductors. 
  *
  *
  *
@@ -69,6 +69,19 @@ public class LanguageXMLTransformDemo {
 	    File fileOutput = new File("src/main/resources/languages/german_out.xml");
 	    xmlTransformLanguagesXmlFile(fileXSLT, inputXmlFile, fileOutput);
 
+	    
+	    //
+	    //
+	    //
+	    fileXSLT = new File("src/main/resources/languages/language_v0_To_csv.xsl");
+	    fileOutput = new File("src/main/resources/languages/german_out.csv");
+	    xmlTransformLanguagesXmlFile(fileXSLT, inputXmlFile, fileOutput);
+	    
+	    //
+	    //
+	    //
+	    boolean transformToPropertiesFiles = false ;
+	    if ( transformToPropertiesFiles ){
 	    fileXSLT = new File("src/main/resources/languages/language_v0_To_properties.xsl");
 	    fileOutput = new File("src/main/resources/languages/lang.properties");
 	    xmlTransformLanguagesXmlFile(fileXSLT, inputXmlFile, fileOutput);
@@ -140,6 +153,7 @@ public class LanguageXMLTransformDemo {
 		    xmlTransformLanguagesXmlFile(fileXSLT, fileSrc, fileOutput);
 
 		}
+	    }
 	    }
 
 	} catch (Exception e) {

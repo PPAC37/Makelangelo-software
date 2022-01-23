@@ -10,6 +10,7 @@
          https://www.w3schools.com/xml/xsl_functions.asp
          
          
+TODO review to https://www.javacodegeeks.com/2014/07/converting-xml-to-csv-using-xslt-1-0.html
          TODO !
          
          les meta en cle 
@@ -45,7 +46,11 @@
     <xsl:param name="timestamp"/> 
     <xsl:param name="src"/> 
     
-    <xsl:template match="/">        
+    <xsl:template match="/">       
+        
+        
+      <xsl:text>src,name,author,key,key_id,value,hint</xsl:text>
+      <xsl:text>&#xA;</xsl:text> 
        
         <xsl:variable name="memo" >
             
@@ -129,12 +134,15 @@
         Source :  https://stackoverflow.com/questions/365312/xml-to-csv-using-xslt
       https://stackoverflow.com/a/61820507
     
-This CsvEscape function is XSLT 1.0 and escapes column values ,, ", and newlines like RFC 4180 https://www.rfc-editor.org/rfc/rfc4180 or Excel. 
+This CsvEscape function is XSLT 1.0 and escapes column values ,, ", and newlines 
+like RFC 4180 https://www.rfc-editor.org/rfc/rfc4180 or Excel. 
 It makes use of the fact that you can recursively call XSLT templates:
 
-      The template EscapeQuotes replaces all double quotes with 2 double quotes, recursively from the start of the string.
+      The template EscapeQuotes replaces all double quotes with 2 double quotes, 
+recursively from the start of the string.
     
-        The template CsvEscape checks if the text contains a comma or double quote, and if so surrounds the whole string with a pair of double quotes and calls EscapeQuotes for the string.
+        The template CsvEscape checks if the text contains a comma or double quote, 
+and if so surrounds the whole string with a pair of double quotes and calls EscapeQuotes for the string.
       
     Example usage: xsltproc xmltocsv.xslt file.xml > file.csv
     -->
