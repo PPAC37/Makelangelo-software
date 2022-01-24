@@ -80,7 +80,7 @@ public class LanguageXMLTransformDemo {
 	    //
 	    //
 	    //
-	    boolean transformToPropertiesFiles = false ;
+	    boolean transformToPropertiesFiles = true ;
 	    if ( transformToPropertiesFiles ){
 	    fileXSLT = new File("src/main/resources/languages/language_v0_To_properties.xsl");
 	    fileOutput = new File("src/main/resources/languages/lang.properties");
@@ -112,12 +112,20 @@ public class LanguageXMLTransformDemo {
 			Locale l = Locale.forLanguageTag(p.getFileName().toString().replaceAll(".xml", "").substring(0, 3));
 			//l = new Locale.Builder().setLanguageTag(p.getFileName().toString().replaceAll(".xml", "").substring(0,3)).build();
 			outputlLocalInfo(l);
-
+			
+			String fileNameNoExtension = p.getFileName().toString().replaceAll(".xml", "");
+			Locale l_en = Locale.ENGLISH;
 			for (String sLangIso : Locale.getISOLanguages()) {
 			    Locale tmpLocal = Locale.forLanguageTag(sLangIso);
+			    if ( tmpLocal.getDisplayLanguage(Locale.ENGLISH).equalsIgnoreCase(fileNameNoExtension)){
+				l= tmpLocal;
+				System.out.printf("%s match %s\n",fileNameNoExtension,tmpLocal.getDisplayName());
+				break;
+			    }
 			    //outputlLocalInfo(tmpLocal);
 			    if (tmpLocal.getISO3Language().equalsIgnoreCase(l.getISO3Language())) {
 				l = tmpLocal;
+				System.out.printf("%s match %s\n",l.getISO3Language(),tmpLocal.getDisplayName());
 				break;
 			    }
 			}
@@ -170,12 +178,12 @@ public class LanguageXMLTransformDemo {
      * <code>transformer.setParameter("src", inputXmlFile.toString());</code>.
      *
      * Then inside your XSLT document declare the parameter using
-     * <code><xsl:param name="yourParamName" /></code>
+     * {@code <xsl:param name="yourParamName" />}
      *
      * and you can then use it in your XSLT for example this way:
-     * <code><xsl:value-of select="$yourParamName" /></code>.
+     * {@code <xsl:value-of select="$yourParamName" /></code>}
      * <br>
-     * Important to note that <code><xsl:param> </code> must be declared at the
+     * Important to note that {@code <xsl:param> } must be declared at the
      * top level of the stylesheet. If you declare it within a template, it will
      * be considered a parameter to the template not to the whole stylesheet.
      *
