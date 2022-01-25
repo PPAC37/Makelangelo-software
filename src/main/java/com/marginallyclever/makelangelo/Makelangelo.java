@@ -112,6 +112,8 @@ public final class Makelangelo {
 
 	private TurtleRenderFacade myTurtleRenderer = new TurtleRenderFacade();
 	private RangeSlider rangeSlider;
+	private JLabel labelRangeMin = new JLabel();
+	private JLabel labelRangeMax = new JLabel();
 	
 	private PlotterRenderer myPlotterRenderer;
 	
@@ -404,7 +406,8 @@ public final class Makelangelo {
 
 	private void openPlotterControls() {
 		JDialog dialog = new JDialog(mainFrame, Translator.get("PlotterControls.Title"));
-		dialog.setPreferredSize(new Dimension(850, 220));
+		dialog.setPreferredSize(new Dimension(PlotterControls.DIMENSION_PANEL_WIDTH, PlotterControls.DIMENSION_PANEL_HEIGHT));
+		dialog.setMinimumSize(new Dimension(PlotterControls.DIMENSION_PANEL_WIDTH, PlotterControls.DIMENSION_PANEL_HEIGHT));
 		PlotterControls plotterControls = new PlotterControls(myPlotter,myTurtle, dialog);
 		dialog.add(plotterControls);
 		dialog.setLocationRelativeTo(mainFrame);
@@ -420,7 +423,6 @@ public final class Makelangelo {
 			}
 		});
 
-		dialog.setResizable(false);
 		dialog.setVisible(true);
 	}
 
@@ -726,14 +728,17 @@ public final class Makelangelo {
 	}
 
 	/**
-	 * See
-	 * http://www.dreamincode.net/forums/topic/190944-creating-an-updater-in-
-	 * java/
+	 * See http://www.dreamincode.net/forums/topic/190944-creating-an-updater-in-java/
 	 *//*
-	 * private void downloadUpdate() { String[] run =
-	 * {"java","-jar","updater/update.jar"}; try {
-	 * Runtime.getRuntime().exec(run); } catch (Exception ex) {
-	 * ex.printStackTrace(); } System.exit(0); }
+	 * private void downloadUpdate() {
+	 *   String[] run = {"java","-jar","updater/update.jar"};
+	 *   try {
+	 *     Runtime.getRuntime().exec(run);
+	 *   } catch (Exception ex) {
+	 *     ex.printStackTrace();
+	 *   }
+	 *   System.exit(0);
+	 * }
 	 */
 
 	private Container createContentPane() {
@@ -750,20 +755,46 @@ public final class Makelangelo {
 		previewPanel.addListener(myTurtleRenderer);
 		addPlotterRendererToPreviewPanel();
 		
-		logger.debug("  create range slider...");
-		rangeSlider = new RangeSlider();
-		rangeSlider.addChangeListener((e)->{
-            RangeSlider slider = (RangeSlider) e.getSource();
-            int bottom = Integer.valueOf(slider.getValue());
-            int top = Integer.valueOf(slider.getUpperValue());
-            myTurtleRenderer.setFirst(bottom);
-            myTurtleRenderer.setLast(top);
-		});
-		// major layout
+		createRangeSlider(contentPane);
+		
 		contentPane.add(previewPanel, BorderLayout.CENTER);
-		contentPane.add(rangeSlider, BorderLayout.SOUTH);
 
 		return contentPane;
+	}
+
+	/**
+	 * Build and lay out the bottom-most components of the main view: 
+	 * the two-headed range slider and the numbers that show the head
+	 * values.
+	 * @param contentPane where to attach the new elements.
+	 */
+	private void createRangeSlider(JPanel contentPane) {
+		logger.debug("  create range slider...");
+		JPanel bottomPanel = new JPanel(new BorderLayout());
+		rangeSlider = new RangeSlider();
+		rangeSlider.addChangeListener((e)->{
+	        RangeSlider slider = (RangeSlider)e.getSource();
+	        int bottom = Integer.valueOf(slider.getValue());
+	        int top = Integer.valueOf(slider.getUpperValue());
+	        myTurtleRenderer.setFirst(bottom);
+	        myTurtleRenderer.setLast(top);
+	        labelRangeMin.setText(Integer.toString(bottom));
+	        labelRangeMax.setText(Integer.toString(top));
+		});
+		
+		Dimension d = labelRangeMin.getPreferredSize();
+		d.width=50;
+		labelRangeMin.setPreferredSize(d);
+		labelRangeMax.setPreferredSize(d);
+		labelRangeMax.setHorizontalAlignment(SwingConstants.RIGHT);
+		labelRangeMin.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 5));
+		labelRangeMax.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 5));
+		
+		bottomPanel.add(labelRangeMin, BorderLayout.WEST);
+		bottomPanel.add(rangeSlider, BorderLayout.CENTER);
+		bottomPanel.add(labelRangeMax, BorderLayout.EAST);
+		
+		contentPane.add(bottomPanel, BorderLayout.SOUTH);
 	}
 
 	//  For thread safety this method should be invoked from the event-dispatching thread.
