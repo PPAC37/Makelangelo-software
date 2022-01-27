@@ -17,6 +17,7 @@
  */
 package com.marginallyclever.util;
 import java.io.File;
+import java.io.OutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -67,7 +68,19 @@ public class FindAllTraductionXMLGenerator {
 	 * https://mkyong.com/java/how-to-create-xml-file-in-java-dom/
 	 *
 	 */
+	
 	public static void generatePartialXmlFileWithMissingKey(SortedMap<String, ArrayList<FindAllTraductionResult>> groupIdenticalMissingKey) {
+		generatePartialXmlFileWithMissingKey(groupIdenticalMissingKey,new StreamResult(System.out));
+	}
+	public static void generatePartialXmlFileWithMissingKey(SortedMap<String, ArrayList<FindAllTraductionResult>> groupIdenticalMissingKey, File xmlFileOutput) {
+	   if ( xmlFileOutput == null) {
+	       generatePartialXmlFileWithMissingKey(groupIdenticalMissingKey,new StreamResult(System.out));
+	   }else{
+	       generatePartialXmlFileWithMissingKey(groupIdenticalMissingKey,new StreamResult(xmlFileOutput));
+	   }
+	}
+	
+	public static void generatePartialXmlFileWithMissingKey(SortedMap<String, ArrayList<FindAllTraductionResult>> groupIdenticalMissingKey, StreamResult streamResult) {
 	    try {
 		//SortedSet<String> missingKeys = new TreeSet<>();
 		String name = "auto_generated_missing_key";//LanguageName
@@ -151,8 +164,11 @@ public class FindAllTraductionXMLGenerator {
 //		final File file = new File(xmlFilePath);
 //		StreamResult streamResult = new StreamResult(file);
 		// If you use
-		 StreamResult streamResult = new StreamResult(System.out);
+//		 StreamResult streamResult = new StreamResult(System.out);
 		// the output will be pushed to the standard output ...
+		
+		
+		 
 		// You can use that for debugging 
 		transformer.transform(domSource, streamResult);//new StAXResult() ???
 //		System.out.println("Done creating XML File: " + file.getAbsolutePath());

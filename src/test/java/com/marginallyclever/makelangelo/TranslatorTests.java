@@ -6,11 +6,13 @@ import com.marginallyclever.util.FindAllTraductionResult;
 import com.marginallyclever.util.FindAllTraductionXMLGenerator;
 import com.marginallyclever.util.PreferencesHelper;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.SortedMap;
+import javax.xml.transform.stream.StreamResult;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -67,7 +69,7 @@ public class TranslatorTests {
 //	    try {
 		//Pre requis
 	    // Bug Introduced commenting : 	
-	    // Translator.start();
+	     Translator.start();
 		//Where to look
 		String baseDirToSearch = "src" + File.separator + "main" + File.separator + "java";
 		System.out.printf("PDW=%s\n", new File(".").getAbsolutePath());
@@ -94,6 +96,17 @@ public class TranslatorTests {
 		    }
 		} else {
 		    FindAllTraductionXMLGenerator.generatePartialXmlFileWithMissingKey(groupIdenticalMissingKey);
+		     String xmlFilePath = "missing_language.md";
+		final File file = new File(xmlFilePath);
+		    FileWriter fw = new FileWriter(file);
+		    fw.write("# missing traduction keys ...\n\n```\n");
+		    StreamResult streamResult = new StreamResult(fw);
+		    
+//		StreamResult streamResult = new StreamResult(file);
+		    FindAllTraductionXMLGenerator.generatePartialXmlFileWithMissingKey(groupIdenticalMissingKey,streamResult);
+		    fw.flush();
+		    fw.write("\n```\n");
+		    fw.close();
 		}
 
 		// validate or not the test. (succes if no missing keys found)
