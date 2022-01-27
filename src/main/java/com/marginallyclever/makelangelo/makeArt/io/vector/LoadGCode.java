@@ -40,6 +40,7 @@ public class LoadGCode implements TurtleLoader {
 	@Override
 	public Turtle load(InputStream in) throws Exception {
 		Turtle turtle = new Turtle();
+		turtle.penUp();
 		ColorRGB penDownColor = turtle.getColor();
 		double scaleXY=1;
 		boolean isAbsolute=true;
@@ -97,6 +98,7 @@ public class LoadGCode implements TurtleLoader {
 				double nz = oz;
 				double ni = nx;
 				double nj = ny;
+//				double ne = 0;
 						
 				if(tokenExists("X",tokens)!=null) {
 					double v = Float.valueOf(tokenExists("X",tokens).substring(1)) * scaleXY;
@@ -119,15 +121,28 @@ public class LoadGCode implements TurtleLoader {
 					nj = isAbsolute ? v : nj+v;
 				}
 				
+				
+//				if(tokenExists("E",tokens)!=null) {
+//					double v = Float.valueOf(tokenExists("E",tokens).substring(1)) * scaleXY;
+//					ne = isAbsolute ? v : nj+v;
+//				}
+				
 				if(gCodeToken!=null) {
 					int gCode = Integer.parseInt(gCodeToken.substring(1));
 					if(gCode==0 || gCode==1) {
-						if(nz!=oz) {
-							// z change
-							if(turtle.isUp()) turtle.penDown();
-							else turtle.penUp();
-							oz=nz;
+						if ( gCode == 0){
+						    turtle.penUp();
+						}else{
+						    turtle.penDown();
+					  
 						}
+						//???
+//						if(nz!=oz) {
+//							// z change
+//							if(turtle.isUp()) turtle.penDown();
+//							else turtle.penUp();
+//							oz=nz;
+//						}
 						if(nx!=ox || ny!=oy) {
 							turtle.moveTo(nx, ny);
 							ox=nx;
