@@ -83,7 +83,7 @@ public class FindAllTraductionXMLGenerator {
     }
 
     public static void generatePartialXmlFileWithMissingKey(SortedMap<String, ArrayList<FindAllTraductionResult>> groupIdenticalMissingKey, StreamResult streamResult) {
-	boolean generatJustElementsStringAndNoHeaderOrParents = false;
+	boolean generatJustElementsStringAndNoHeaderOrParents = true;
 	try {
 	    //SortedSet<String> missingKeys = new TreeSet<>();
 	    String name = "auto_generated_missing_key";//LanguageName
@@ -213,7 +213,10 @@ public class FindAllTraductionXMLGenerator {
 	    //transformer.setOutputProperty(OutputKeys.STANDALONE, "no");
 	    
 	    //
-	    transformer.setOutputProperty(OutputKeys.DOCTYPE_SYSTEM, "language_v0.dtd");
+	    if ( !generatJustElementsStringAndNoHeaderOrParents ){
+	    //transformer.setOutputProperty(OutputKeys.DOCTYPE_SYSTEM, "language_v0.dtd");
+	    transformer.setOutputProperty(OutputKeys.DOCTYPE_SYSTEM, "language_v0.3.dtd");
+	    }
 	    
 	    DOMSource domSource = new DOMSource(doc);
 
