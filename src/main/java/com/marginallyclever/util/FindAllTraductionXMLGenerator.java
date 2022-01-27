@@ -51,6 +51,8 @@ public class FindAllTraductionXMLGenerator {
     private static final org.slf4j.Logger logger = LoggerFactory.getLogger(FindAllTraductionXMLGenerator.class);
 
     public static final String XML_TAG_LANGUAGE = "language";//"language"
+    
+    public static final String XML_TAG_META = "meta";
 
     // FROM PR 455 TODO Get them from TranslatorLanguage.java if PR 455 is merdged.
     public static final String XML_TAG_NAME = "name";
@@ -121,7 +123,7 @@ public class FindAllTraductionXMLGenerator {
 		 // add xml comment
 	    //root.appendChild(comment);
 	    
-	    Element elemMeta = doc.createElement("meta");
+	    Element elemMeta = doc.createElement(XML_TAG_META);
 	    root.appendChild(elemMeta);
 
 	    Element elemLanguageName = doc.createElement(XML_TAG_NAME);
@@ -236,6 +238,10 @@ public class FindAllTraductionXMLGenerator {
 	}
     }
     
+    /**
+     * testing ...
+     * @param args 
+     */
     public static void main(String[] args) {
 	FindAllTraductionGet.main(args);
     }
