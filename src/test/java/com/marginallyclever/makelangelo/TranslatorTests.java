@@ -96,17 +96,20 @@ public class TranslatorTests {
 		    }
 		} else {
 		    FindAllTraductionXMLGenerator.generatePartialXmlFileWithMissingKey(groupIdenticalMissingKey);
-		     String xmlFilePath = "missing_language.md";
-		final File file = new File(xmlFilePath);
-		    FileWriter fw = new FileWriter(file);
-		    fw.write("# missing traduction keys ...\n\n```\n");
-		    StreamResult streamResult = new StreamResult(fw);
 		    
-//		StreamResult streamResult = new StreamResult(file);
-		    FindAllTraductionXMLGenerator.generatePartialXmlFileWithMissingKey(groupIdenticalMissingKey,streamResult);
-		    fw.flush();
-		    fw.write("\n```\n");
-		    fw.close();
+		    if ( !groupIdenticalMissingKey.isEmpty()){
+			String xmlFilePath = "missing_language.md";
+			final File file = new File(xmlFilePath);
+			FileWriter fw = new FileWriter(file);
+			fw.write("# missing traduction keys ...\n\n```\n");
+			StreamResult streamResult = new StreamResult(fw);
+
+			//StreamResult streamResult = new StreamResult(file);
+			FindAllTraductionXMLGenerator.generatePartialXmlFileWithMissingKey(groupIdenticalMissingKey,streamResult);
+			fw.flush();
+			fw.write("\n```\n");
+			fw.close();
+		    }
 		}
 
 		// validate or not the test. (succes if no missing keys found)
