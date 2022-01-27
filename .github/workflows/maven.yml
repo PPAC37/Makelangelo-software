@@ -33,7 +33,7 @@ jobs:
     # PPAC37 trying to create an issue if the ci test faild and a specifc file have been created   
     # https://github.com/peter-evans/create-issue-from-file used in https://github.com/lycheeverse/lychee-action
     - name: Create Issue From File
-      if: ${{ steps.buildandtest.outputs.exit_code != 0 }}
+      if: ${{ steps.buildandtest.outputs.exit_code == 0 }}
       uses: peter-evans/create-issue-from-file@v3
       with:
         title: Language Missing Key Checker Report
