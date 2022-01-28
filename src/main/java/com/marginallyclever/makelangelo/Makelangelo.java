@@ -99,7 +99,7 @@ public final class Makelangelo {
 
 	private MakelangeloSettingPanel myPreferencesPanel;
 	
-	private Camera camera;
+	public Camera camera;
 	private Plotter myPlotter;
 	private Paper myPaper = new Paper();
 	private Turtle myTurtle = new Turtle();
@@ -588,12 +588,14 @@ public final class Makelangelo {
 			}
 			else{
 			    previewPanel.removeListener(loader);
-			    recentFiles.addFilename(loader.getLastFileIn());
+			    //recentFiles.addFilename(loader.getLastFileIn());
 			}
 		} catch(Exception e) {
 			logger.error("Error while loading the file {}", filename, e);
 			JOptionPane.showMessageDialog(mainFrame, e.getLocalizedMessage(), Translator.get("Error"), JOptionPane.ERROR_MESSAGE);
-			recentFiles.removeFilename(filename);
+			if ( !doNotShowLoadDialogu){
+			    recentFiles.removeFilename(filename);
+			}
 		}
 	}
 
@@ -740,7 +742,7 @@ public final class Makelangelo {
 	 * }
 	 */
 
-	private Container createContentPane() {
+	public Container createContentPane() {
 		logger.debug("create content pane...");
 
 		JPanel contentPane = new JPanel(new BorderLayout());
@@ -798,6 +800,33 @@ public final class Makelangelo {
 
 	//  For thread safety this method should be invoked from the event-dispatching thread.
 	private void createAppWindow() {
+	    createAppWindow(true);
+//		logger.debug("Creating GUI...");
+//
+//		mainFrame = new JFrame(Translator.get("TitlePrefix")+" "+this.VERSION);
+//		mainFrame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+//		mainFrame.addWindowListener(new WindowAdapter() {
+//			@Override
+//			public void windowClosing(WindowEvent e) {
+//				onClosing();
+//			}
+//		});
+//		
+//		buildMenuBar();
+//		
+//		mainFrame.setContentPane(createContentPane());
+//
+//		camera.zoomToFit(Paper.DEFAULT_WIDTH, Paper.DEFAULT_HEIGHT);
+//		
+//		logger.debug("  make visible...");
+//		mainFrame.setVisible(true);
+//		
+//		setWindowSizeAndPosition();
+//
+//		setupDropTarget();
+	}
+	
+	public void createAppWindow(boolean asJFrame) {
 		logger.debug("Creating GUI...");
 
 		mainFrame = new JFrame(Translator.get("TitlePrefix")+" "+this.VERSION);
