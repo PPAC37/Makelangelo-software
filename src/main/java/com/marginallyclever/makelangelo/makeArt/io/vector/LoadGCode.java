@@ -37,10 +37,15 @@ public class LoadGCode implements TurtleLoader {
 		return a;
 	}
 	
+	boolean asFlavoredMarlinPolargraphe = true;
+	boolean asFlavoredMakelangeloFirmware = true;
+	
 	@Override
 	public Turtle load(InputStream in) throws Exception {
 		Turtle turtle = new Turtle();
-		turtle.penUp();
+		if (asFlavoredMarlinPolargraphe){
+		    turtle.penUp();
+		}
 		ColorRGB penDownColor = turtle.getColor();
 		double scaleXY=1;
 		boolean isAbsolute=true;
@@ -130,24 +135,30 @@ public class LoadGCode implements TurtleLoader {
 				if(gCodeToken!=null) {
 					int gCode = Integer.parseInt(gCodeToken.substring(1));
 					if(gCode==0 || gCode==1) {
+					    if (asFlavoredMarlinPolargraphe){
+					        // Only for marlin-polargraph flavored .gcode
 						if ( gCode == 0){
 						    turtle.penUp();
 						}else{
 						    turtle.penDown();
 					  
 						}
-						//???
-//						if(nz!=oz) {
-//							// z change
-//							if(turtle.isUp()) turtle.penDown();
-//							else turtle.penUp();
-//							oz=nz;
-//						}
-						if(nx!=ox || ny!=oy) {
-							turtle.moveTo(nx, ny);
-							ox=nx;
-							oy=ny;
+					    }
+					    if ( asFlavoredMakelangeloFirmware ){
+						// Only for Makelangelo-firmware flavored .gcode
+						if(nz!=oz) {
+							// z change
+							if(turtle.isUp()) turtle.penDown();
+							else turtle.penUp();
+							oz=nz;
 						}
+					    }
+					    
+					    if(nx!=ox || ny!=oy) {
+						    turtle.moveTo(nx, ny);
+						    ox=nx;
+						    oy=ny;
+					    }
 					} else if(gCode==2 || gCode==3) {
 						// arc
 						int dir = (gCode==2) ? -1 : 1;
