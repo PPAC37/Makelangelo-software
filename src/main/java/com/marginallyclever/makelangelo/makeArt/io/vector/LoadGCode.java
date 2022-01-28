@@ -38,12 +38,13 @@ public class LoadGCode implements TurtleLoader {
 	}
 	
 	boolean asFlavoredMarlinPolargraphe = true;
-	boolean asFlavoredMakelangeloFirmware = true;
+	boolean asFlavoredMakelangeloFirmware = false;
 	
 	@Override
 	public Turtle load(InputStream in) throws Exception {
 		Turtle turtle = new Turtle();
 		if (asFlavoredMarlinPolargraphe){
+		    // is the ok for all case ?
 		    turtle.penUp();
 		}
 		ColorRGB penDownColor = turtle.getColor();
