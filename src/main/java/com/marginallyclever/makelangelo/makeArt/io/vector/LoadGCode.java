@@ -6,7 +6,30 @@ import java.util.Scanner;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 import com.marginallyclever.convenience.ColorRGB;
+import com.marginallyclever.convenience.CommandLineOptions;
+import com.marginallyclever.convenience.log.Log;
+import com.marginallyclever.makelangelo.Makelangelo;
+import com.marginallyclever.makelangelo.Translator;
+import com.marginallyclever.makelangelo.makelangeloSettingsPanel.LanguagePreferences;
 import com.marginallyclever.makelangelo.turtle.Turtle;
+import com.marginallyclever.util.PreferencesHelper;
+import java.awt.BasicStroke;
+import java.awt.Color;
+import java.awt.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Image;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.logging.Level;
+import javax.imageio.ImageIO;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
 
 public class LoadGCode implements TurtleLoader {
 	private FileNameExtensionFilter filter = new FileNameExtensionFilter("GCode", "gcode");
@@ -40,12 +63,26 @@ public class LoadGCode implements TurtleLoader {
 	boolean asFlavoredMarlinPolargraphe = true;
 	boolean asFlavoredMakelangeloFirmware = false;
 	
+	/**
+	 * ?? pour les test trouver une methode pour comparer avec le resultat d'un fonction draw arc ?
+	 * http://underpop.online.fr/j/java/help/drawing-arcs-graphics-and-java-2d.html.gz
+	 * <pre>{@code public void paintComponent( Graphics g )
+11 {
+12 super.paintComponent( g ); // call superclass's paintComponent
+13
+14 // start at 0 and sweep 360 degrees
+15 g.setColor( Color.RED );
+16 g.drawRect( 15, 35, 80, 80 );
+17 g.setColor( Color.BLACK );
+18 drawArc( 15, 35, 80, 80, 0, 360 ); }</pre>
+	 */
 	@Override
 	public Turtle load(InputStream in) throws Exception {
 		Turtle turtle = new Turtle();
 		if (asFlavoredMarlinPolargraphe){
 		    // is the ok for all case ?
 		    turtle.penUp();
+		    turtle.setX(0);turtle.setY(0);
 		}
 		ColorRGB penDownColor = turtle.getColor();
 		double scaleXY=1;
@@ -54,6 +91,7 @@ public class LoadGCode implements TurtleLoader {
 		double oz=turtle.isUp()?90:0;
 		double ox=turtle.getX();
 		double oy=turtle.getY();
+		double oe=0;//
 		
 		int lineNumber=0;
 		Scanner scanner = new Scanner(in);	
@@ -92,8 +130,10 @@ public class LoadGCode implements TurtleLoader {
 					switch(gCode) {
 					case 20: scaleXY=25.4;  break;  // in -> mm
 					case 21: scaleXY= 1.0;  break;  // mm
+					case 28: turtle.setX(0);turtle.setY(0); break; // not true in all case ( some home can be done else where ...)
 					case 90: isAbsolute=true;	break;  // absolute mode
 					case 91: isAbsolute=false;	break;  // relative mode
+					//92 !
 					default:
 						break;
 					}
@@ -104,7 +144,7 @@ public class LoadGCode implements TurtleLoader {
 				double nz = oz;
 				double ni = nx;
 				double nj = ny;
-//				double ne = 0;
+				double ne = oe;
 						
 				if(tokenExists("X",tokens)!=null) {
 					double v = Float.valueOf(tokenExists("X",tokens).substring(1)) * scaleXY;
@@ -127,23 +167,35 @@ public class LoadGCode implements TurtleLoader {
 					nj = isAbsolute ? v : nj+v;
 				}
 				
-				
-//				if(tokenExists("E",tokens)!=null) {
-//					double v = Float.valueOf(tokenExists("E",tokens).substring(1)) * scaleXY;
-//					ne = isAbsolute ? v : nj+v;
-//				}
+				// need to see if e change for G2/G3 
+				boolean haveE = false;
+				if(tokenExists("E",tokens)!=null) {
+				    haveE = true;
+					double v = Float.valueOf(tokenExists("E",tokens).substring(1)) * scaleXY;
+					ne = isAbsolute ? v : ne+v;
+				}
 				
 				if(gCodeToken!=null) {
 					int gCode = Integer.parseInt(gCodeToken.substring(1));
 					if(gCode==0 || gCode==1) {
 					    if (asFlavoredMarlinPolargraphe){
+						// not totaly true ... G0 E1 is posible ...
 					        // Only for marlin-polargraph flavored .gcode
 						if ( gCode == 0){
 						    turtle.penUp();
 						}else{
 						    turtle.penDown();
 					  
+						} 
+						if ( haveE){
+						// but may by not
+						if ( ne == oe){ // so no extrusion !? ( excepte a G92 E... or ... ?
+						    turtle.penUp();
+						}else{
+						    turtle.penDown();
 						}
+					    }
+					     
 					    }
 					    if ( asFlavoredMakelangeloFirmware ){
 						// Only for Makelangelo-firmware flavored .gcode
@@ -158,9 +210,23 @@ public class LoadGCode implements TurtleLoader {
 					    if(nx!=ox || ny!=oy) {
 						    turtle.moveTo(nx, ny);
 						    ox=nx;
-						    oy=ny;
+						    oy=ny;						    
+					    }
+					    if ( haveE){
+						oe =ne;
 					    }
 					} else if(gCode==2 || gCode==3) {
+						// a G2 or G3 mouve have an E argument ... posibly a "draw"
+						if ( haveE){
+						    // but may by not
+						    if ( ne == oe){ // so no extrusion !? ( excepte a G92 E... or ... ?
+							turtle.penUp();
+						    }else{
+							turtle.penDown();
+						    }
+						}else{
+						    turtle.penUp();
+						}
 						// arc
 						int dir = (gCode==2) ? -1 : 1;
 	
@@ -181,7 +247,7 @@ public class LoadGCode implements TurtleLoader {
 						double len = Math.abs(theta) * radius;
 						double angle3, scale;
 	
-						// TODO turtle support for arcs
+						// TODO turtle support for arcs https://marlinfw.org/docs/gcode/G002-G003.html
 						// Draw the arc from a lot of little line segments.
 						for(double k = 0; k < len; k++) {
 							scale = k / len;
@@ -194,6 +260,7 @@ public class LoadGCode implements TurtleLoader {
 						turtle.moveTo(nx,ny);
 						ox=nx;
 						oy=ny;
+						oe=ne;
 					}
 					// else do nothing.
 				}
@@ -208,4 +275,133 @@ public class LoadGCode implements TurtleLoader {
 
 		return turtle;
 	}
+	
+	//
+	// Dev speed test (GUI)
+	//
+	private static Logger logger = LoggerFactory.getLogger(LoadGCode.class);
+	public static void main(String[] args) {
+	
+	    // 
+	    	Log.start();
+		// lazy init to be able to purge old files
+		//logger = LoggerFactory.getLogger(Makelangelo.class);
+
+		PreferencesHelper.start();
+		CommandLineOptions.setFromMain(args);
+		Translator.start();
+
+		if(Translator.isThisTheFirstTimeLoadingLanguageFiles()) {
+			LanguagePreferences.chooseLanguage();
+		}
+		
+		//setSystemLookAndFeel();
+		Makelangelo.setSystemLookAndFeel(); // modified to be public
+
+		javax.swing.SwingUtilities.invokeLater(()->{
+		    
+		    
+		    
+			try {
+			    //
+			    Makelangelo makelangeloProgram = new Makelangelo();
+			    makelangeloProgram.doNotAskIfOkOnExit = true;
+			    makelangeloProgram.doNotShowLoadDialogu = true;
+			    
+			    //todo find a hack to use it witout jframe ...
+			    makelangeloProgram.run();//in CI throws HeadlessException as it create a new JFrame ... and display it
+			    
+			    // load a .gcode (test set todo)
+			    makelangeloProgram.openLoadFile("/home/q6/g2_g3_test.gcode");
+			    
+			    // a way to do a kind of print screen ...
+			    JFrame mainFrame = makelangeloProgram.getMainFrame();
+			    // n.b. if using a JFrame / Frame we do not get the OS décoration ( window bar title ... )
+			    Component cToScreenShoot = (Component)mainFrame;
+			    
+			    
+			    //Graphics graphics = cToScreenShoot.getGraphics();
+			    
+			    
+			    //https://stackoverflow.com/questions/19621105/save-image-from-jpanel-after-draw/19621211
+			    //https://stackoverflow.com/questions/31744516/save-a-drawn-picture-on-a-jpanel-in-a-file-java
+			    
+			    
+			    BufferedImage bufferImage = new BufferedImage(cToScreenShoot.getWidth(), cToScreenShoot.getHeight(),
+				    BufferedImage.TYPE_INT_ARGB);
+			    Graphics2D bufferGraphics = bufferImage.createGraphics();			    
+			    
+			    			    // Clear the buffer:
+			    bufferGraphics.clearRect(0, 0, cToScreenShoot.getWidth(), cToScreenShoot.getHeight());
+			    
+			  
+			    // make the JComponent draw on the bufferedGraphics to get a copy of the render.
+			    cToScreenShoot.paintAll(bufferGraphics);
+			    
+			    // If you whant to add some to the normaly paint result ( like a date)
+			     BasicStroke stroke = new BasicStroke(4);
+			    bufferGraphics.setStroke(stroke);
+			    bufferGraphics.setColor(Color.RED);
+			    bufferGraphics.drawString("Coucou", cToScreenShoot.getWidth()/2, cToScreenShoot.getHeight()/2);
+			    
+			    // save the "image" painted in the bufferImage to a file
+			    ImageIO.write(bufferImage, "png", new File("cframeImage.png"));
+			   
+			    
+			    // resize image to
+			    int dimW = cToScreenShoot.getWidth()/2;
+			    int dimH = cToScreenShoot.getHeight()/2;
+			    Image scaledInstance = bufferImage.getScaledInstance(dimW, dimH, Image.SCALE_DEFAULT);
+			    ImageIO.write(convertToBufferedImage(scaledInstance), "png", new File("cframeImage_vignette.png"));
+			    //
+			    System.exit(0);
+			    
+			} catch (IOException ex) {
+			    java.util.logging.Logger.getLogger(LoadGCode.class.getName()).log(Level.SEVERE, null, ex);
+			}
+
+		});
+		
+		//
+		
+		
+    }
+	
+	
+    /**
+     * Convert Image to BufferedImage. Source :
+     * https://mkyong.com/java/how-to-write-an-image-to-file-imageio/
+     *
+     * @param img
+     * @return
+     */
+    public static BufferedImage convertToBufferedImage(Image img) {
+
+        if (img instanceof BufferedImage) {
+            return (BufferedImage) img;
+        }
+
+        // Create a buffered image with transparency
+        BufferedImage bi = new BufferedImage(
+                img.getWidth(null), img.getHeight(null),
+                BufferedImage.TYPE_INT_ARGB);
+
+        Graphics2D graphics2D = bi.createGraphics();
+        graphics2D.drawImage(img, 0, 0, null);
+        graphics2D.dispose();
+
+        return bi;
+    }
+
+	
+    /**
+     * list out all the image file supported formats. Source :
+     * https://mkyong.com/java/how-to-write-an-image-to-file-imageio/
+     */
+    private static void listImageTypeSupported() {
+        String writerNames[] = ImageIO.getWriterFormatNames();
+        Arrays.stream(writerNames).forEach(System.out::println);
+    }
+	
+	
 }

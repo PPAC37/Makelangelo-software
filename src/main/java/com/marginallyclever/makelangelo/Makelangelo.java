@@ -88,7 +88,8 @@ public final class Makelangelo {
 	private static final String KEY_WINDOW_HEIGHT = "windowHeight";
 	private static final String KEY_MACHINE_STYLE = "machineStyle";
 
-	private static Logger logger;
+	//private static Logger logger;
+	private static Logger logger  = LoggerFactory.getLogger(Makelangelo.class);
 
 	/**
 	 * Defined in src/resources/makelangelo.properties and uses Maven's resource filtering to update the 
@@ -189,7 +190,7 @@ public final class Makelangelo {
 		if (preferences.getBoolean("Check for updates", false)) checkForUpdate(true);
 	}
 
-	private static void setSystemLookAndFeel() {
+	public static void setSystemLookAndFeel() {
 		if(!CommandLineOptions.hasOption("-nolf")) {
 	        try {
 	        	UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
@@ -554,6 +555,8 @@ public final class Makelangelo {
 		return menu;
 	}
 
+	public boolean doNotShowLoadDialogu = false;
+	
 	public void openLoadFile(String filename) {
 		logger.debug("Loading file {}...", filename);
 		try {
@@ -564,6 +567,7 @@ public final class Makelangelo {
 				loader.load(filename);
 			}
 			
+			if ( !doNotShowLoadDialogu){
 			JDialog dialog = new JDialog(mainFrame,LoadFilePanel.class.getSimpleName());
 			dialog.add(loader);
 			dialog.setLocationRelativeTo(mainFrame);
@@ -581,6 +585,11 @@ public final class Makelangelo {
 			});
 
 			dialog.setVisible(true);
+			}
+			else{
+			    previewPanel.removeListener(loader);
+			    recentFiles.addFilename(loader.getLastFileIn());
+			}
 		} catch(Exception e) {
 			logger.error("Error while loading the file {}", filename, e);
 			JOptionPane.showMessageDialog(mainFrame, e.getLocalizedMessage(), Translator.get("Error"), JOptionPane.ERROR_MESSAGE);
@@ -908,8 +917,10 @@ public final class Makelangelo {
 		});
 	}
 
+	public boolean doNotAskIfOkOnExit = false;
 	private void onClosing() {
-		int result = JOptionPane.showConfirmDialog(mainFrame, Translator.get("ConfirmQuitQuestion"),
+	    
+		int result = doNotAskIfOkOnExit?JOptionPane.YES_OPTION:JOptionPane.showConfirmDialog(mainFrame, Translator.get("ConfirmQuitQuestion"),
 				Translator.get("ConfirmQuitTitle"), JOptionPane.YES_NO_OPTION);
 		if (result == JOptionPane.YES_OPTION) {
 			previewPanel.removeListener(myPlotter);
@@ -978,7 +989,7 @@ public final class Makelangelo {
 	public static void main(String[] args) {
 		Log.start();
 		// lazy init to be able to purge old files
-		logger = LoggerFactory.getLogger(Makelangelo.class);
+		//logger = LoggerFactory.getLogger(Makelangelo.class);
 
 		PreferencesHelper.start();
 		CommandLineOptions.setFromMain(args);
@@ -995,4 +1006,14 @@ public final class Makelangelo {
 			makelangeloProgram.run();
 		});
 	}
+
+	//
+	// Hack for dev and gui test usage
+	//
+	
+    public JFrame getMainFrame() {
+	return mainFrame;
+    }
+	
+	
 }
