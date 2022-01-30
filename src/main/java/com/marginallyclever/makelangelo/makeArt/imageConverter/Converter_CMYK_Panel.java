@@ -9,7 +9,7 @@ public class Converter_CMYK_Panel extends ImageConverterPanel {
 	
 	public Converter_CMYK_Panel(Converter_CMYK converter) {
 		super(converter);
-		add(new SelectInteger("passes",Translator.get("ConverterCMYKPasses"),converter.getPasses()));
+		add(new SelectInteger("passes",Translator.get("ConverterCMYKPasses"),converter.getPasses()));// TODO as a spinner to set a minimal value alowed ( passes value should be >=1)
 		add(new SelectReadOnlyText("note",Translator.get("ConverterCMYKNote")));
 	}
 }
