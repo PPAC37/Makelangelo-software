@@ -5,6 +5,7 @@ import com.marginallyclever.convenience.Point2D;
 import com.marginallyclever.convenience.StringHelper;
 import com.marginallyclever.makelangelo.plotter.Plotter;
 import com.marginallyclever.makelangelo.plotter.PlotterEvent;
+import java.util.TreeMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,7 +41,7 @@ public class MarlinPlotterInterface extends MarlinInterface {
 			sendFindHome();
 			break;
 		case PlotterEvent.POSITION:
-			// logger.debug("MarlinPlotterInterface heard plotter move.");
+			 logger.debug("MarlinPlotterInterface heard plotter move.");
 			sendGoto();
 			break;
 		case PlotterEvent.PEN_UPDOWN:
@@ -64,8 +65,9 @@ public class MarlinPlotterInterface extends MarlinInterface {
 		queueAndSendCommand(getToolChangeString(toolNumber));
 	}
 
+	
 	private void sendFindHome() {
-		queueAndSendCommand("G28 XY");
+	//	queueAndSendCommand("G28 XY");
 	}
 
 	private void sendPenUpDown() {
@@ -180,11 +182,39 @@ public class MarlinPlotterInterface extends MarlinInterface {
 		return "M280 P0 S" + (int)p.getPenDownAngle() + " T50";
 	}
 
+	/**
+	 * String.formate("M0 Ready %s and click", getColorName(toolNumber & 0xFFFFFF) ) ; 
+	 * String pattern = String.formate("M0 Ready %s and click", "(.*)" )
+	 * @param toolNumber
+	 * @return 
+	 */
 	public static String getToolChangeString(int toolNumber) {
 		String colorName = getColorName(toolNumber & 0xFFFFFF);
-		return "M0 Ready " + colorName + " and click";
+		return "M0 Ready " + colorName + " and click";// TODO as a format ? ( This should be keep and not modified to ensure LoadGCode color identification from the M0 texte.
 	}
 
+	public static String getSpeakerString(double x_s, double y_p) {
+		   if ( x_s == -1 && y_p == -1){
+			return "M300";
+		    }else if ( x_s == -1 ){
+			return "M300 P"+(int)(y_p);
+		    }else if ( y_p == -1 ){
+			return "M300 S"+(int)(x_s);
+		    }else{
+			return "M300 S"+(int)(x_s)+" P"+(int)(y_p);
+		    }
+		
+	}
+	/**
+	 * TODO the contente of this methode should be in ColorRGB as static utility methodes.
+	 * And we need the reverse. String to int to ColorRGB ...
+	 * <br>
+	 * TODO be conforme to https://en.wikibooks.org/wiki/OpenSCAD_User_Manual/Transformations#color 
+	 * ? http://www.w3.org/TR/css3-color/
+	 * 
+	 * @param toolNumber in fact normaly this is a ColorRGB int int value.
+	 * @return 
+	 */
 	private static String getColorName(int toolNumber) {
 		String name = "";
 		switch (toolNumber) {
@@ -192,7 +222,7 @@ public class MarlinPlotterInterface extends MarlinInterface {
 			name = "red";
 			break;
 		case 0x00ff00:
-			name = "green";
+			name = "green"; //lime !!! TODO be conforme ? as w3c greem = #008000
 			break;
 		case 0x0000ff:
 			name = "blue";
@@ -217,5 +247,52 @@ public class MarlinPlotterInterface extends MarlinInterface {
 			break; // display unknown RGB value as hex
 		}
 		return name;
+	}
+	
+	private static TreeMap<String,Integer> treeMapColorIntValToColorName = null;	
+	private static TreeMap<String,Integer> getColorMap(){
+	    if ( treeMapColorIntValToColorName == null){
+		TreeMap<String,Integer> tm = new TreeMap<>();
+		tm.put("red", 0xff0000);//red		
+		tm.put("green", 0x00ff00);//lime !!! TODO be conforme ? as w3c greem = #008000
+		tm.put("blue", 0x0000ff);//blue
+		tm.put("black", 0x000000);//black
+		tm.put("cyan", 0x00ffff);//cyan
+		tm.put("magenta", 0xff00ff);//magenta		
+		tm.put("yellow", 0xffff00);//yellow
+		tm.put("white", 0xffffff);//white
+		// orange #ffa500
+		// grey #808080 // to avoid ??? this is the background color of the preview ?
+		// ... https://en.wikibooks.org/wiki/OpenSCAD_User_Manual/Transformations#color 
+		// http://www.w3.org/TR/css3-color/
+		treeMapColorIntValToColorName= tm;		
+	    }	    
+	    return treeMapColorIntValToColorName;
+	}	
+	/**
+	 * ? https://en.wikibooks.org/wiki/OpenSCAD_User_Manual/Transformations#color 
+	 * ? http://www.w3.org/TR/css3-color/
+	 * 
+	 * @param colorName
+	 * @return 
+	 */
+	public static int getColorValueFromStringName(String colorName){
+	    if ( getColorMap().containsKey(colorName) ) {
+		return getColorMap().get(colorName);
+	    }
+	    else{
+		if ( colorName == null || colorName.length() != 2 +6 ) {
+		    // throw exception or else try other format ? -> a masque / transformation on the integer . parse int
+		}
+		if ( colorName.startsWith("0x") ){
+		    //default -> "0x" + Integer.toHexString(toolNumber);		 // display unknown RGB value as hex
+		    try{
+			return Integer.parseInt(colorName.substring(2), 16);
+		    }catch (Exception e){
+		    // ? throw exception or will return -1;
+		    }
+		}
+	    }	    
+	    return -1; // ? default value
 	}
 }

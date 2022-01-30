@@ -142,6 +142,16 @@ public class Turtle implements Cloneable {
 		py=y;
 		history.add( new TurtleMove(x, y, isUp ? TurtleMove.TRAVEL : TurtleMove.DRAW_LINE) );
 	}
+	
+	
+	/**
+	 * BIP 
+	 * @param s  
+	 * @param p 
+	 */
+	public void bip(double s,double p) {
+		history.add(new TurtleMove(s, p, TurtleMove.BIP) );
+	}
 		
 	/**
 	 * Absolute position

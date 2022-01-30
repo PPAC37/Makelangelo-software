@@ -94,6 +94,7 @@ public class SaveGCode {
 						previousMovement = m;
 					}
 					case TurtleMove.TOOL_CHANGE -> out.write(MarlinPlotterInterface.getToolChangeString(m.getColor().toInt()) + "\n");
+					case TurtleMove.BIP -> out.write(MarlinPlotterInterface.getSpeakerString(m.x, m.y) + "\n");
 				}
 			}
 			if (!isUp) out.write(MarlinPlotterInterface.getPenUpString(robot) + "\n");

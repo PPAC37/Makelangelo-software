@@ -12,6 +12,7 @@ import com.marginallyclever.makelangelo.Makelangelo;
 import com.marginallyclever.makelangelo.Translator;
 import com.marginallyclever.makelangelo.makelangeloSettingsPanel.LanguagePreferences;
 import com.marginallyclever.makelangelo.paper.Paper;
+import com.marginallyclever.makelangelo.plotter.plotterControls.MarlinPlotterInterface;
 import com.marginallyclever.makelangelo.turtle.Turtle;
 import com.marginallyclever.util.PreferencesHelper;
 import java.awt.AWTException;
@@ -93,7 +94,7 @@ public class LoadGCode implements TurtleLoader {
 		if (asFlavoredMarlinPolargraphe){
 		    // is the ok for all case ?
 		    turtle.penUp();
-		    turtle.setX(0);turtle.setY(0);
+//		    turtle.setX(0);turtle.setY(0);
 		}
 		ColorRGB penDownColor = turtle.getColor();
 		double scaleXY=1;
@@ -108,6 +109,7 @@ public class LoadGCode implements TurtleLoader {
 		Scanner scanner = new Scanner(in);	
 		String line="";
 		try {
+		    // MarlinPlotterInterface.getToolChangeString(colorAs?) :: "M0 Ready " + colorName + " and click"
 			while (scanner.hasNextLine()) {
 				line = scanner.nextLine();
 				lineNumber++;
@@ -123,12 +125,52 @@ public class LoadGCode implements TurtleLoader {
 				if(mCodeToken!=null) {
 					int mCode = Integer.parseInt(mCodeToken.substring(1));
 					switch(mCode) {
+					case 0:
+					    if ("Ready".equals(tokens[1])) {
+						//String pattern = String.formate("M0 Ready %s and click", "(.*)" )
+						String cNameOrHexaValue = tokens[2];						
+						logger.debug("READ MO Ready {} ... line {}", cNameOrHexaValue, lineNumber);						
+						int tmpColor = MarlinPlotterInterface.getColorValueFromStringName(cNameOrHexaValue);
+						if (tmpColor != -1) {
+						    ColorRGB colorRGB = new ColorRGB(tmpColor);
+						    logger.debug("SET colorRGB {} line {}", colorRGB.toString(), lineNumber);
+						    turtle.setColor(colorRGB);
+						} else {
+						    logger.debug("M0 Ready : Parse error color \"{}\" line {} in \"{}\"", cNameOrHexaValue, lineNumber, line);
+						}
+					    } else {
+						logger.debug("Not a \"M0 Ready <color>\" line {} in \"{}\"", lineNumber, line);
+					    }
+					    break;
 					case 6:
 						// tool change
 						String color = tokenExists("T",tokens);
 						penDownColor = new ColorRGB(Integer.parseInt(color.substring(1)));
 						turtle.setColor(penDownColor);
 						break;
+					case 300: 
+					    //TODO ! 
+					   
+					    int s = tokenExists("S",tokens) != null ? Integer.valueOf(tokenExists("S",tokens).substring(1)) : -1;
+					    int p = tokenExists("P",tokens) != null ? Integer.valueOf(tokenExists("P",tokens).substring(1)) : -1;
+					    logger.debug("M300 S{} P{} TODO!",s,p);
+					    turtle.bip(s, p);
+					    /**
+					    * SPEAKER for M300 : Play Tone. TODO Turle hack. (like as pen color / diameter )
+					    * https://marlinfw.org/docs/gcode/M300.html
+					    * 
+					    * <pre>{@code 
+					    * M300 [P<ms>] [S<Hz>]
+					    * Parameters : 
+					    *  [P<ms>]	Duration (1ms)
+					    *  [S<Hz>]	Frequency (260Hz)
+					    * Examples Play a tune.
+					    *  M300 S440 P200
+					    *  M300 S660 P250
+					    *  M300 S880 P300
+					    * }</pre>
+					    */
+					    break;
 					default:
 						// ignore all others
 						break;
@@ -190,13 +232,12 @@ public class LoadGCode implements TurtleLoader {
 					int gCode = Integer.parseInt(gCodeToken.substring(1));
 					if(gCode==0 || gCode==1) {
 					    if (asFlavoredMarlinPolargraphe){
-						// not totaly true ... G0 E1 is posible ...
 					        // Only for marlin-polargraph flavored .gcode
 						if ( gCode == 0){
+						// not totaly true ... G0 E1 is posible ...
 						    turtle.penUp();
 						}else{
-						    turtle.penDown();
-					  
+						    turtle.penDown();					  
 						} 
 						if ( haveE){
 						// but may by not
@@ -275,9 +316,12 @@ public class LoadGCode implements TurtleLoader {
 					}
 					// else do nothing.
 				}
-			}
+				
+				// TODO ? some slicer use some "specific" commente to add information ( Slicing option (like marlin flavor, slicer name and version, ... ),  encoded as text vignettes/thumb images preview, object , layer num, ... )
+			}// <- end while scanner.hasNextLine
 		}
 		catch(Exception e) {
+		        logger.error("{}",e);
 			throw new Exception("GCODE parse failure ("+lineNumber+"): "+line);
 		}
 		finally {
