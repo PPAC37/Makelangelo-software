@@ -75,6 +75,16 @@ public class LoadGCode implements TurtleLoader {
 	boolean asFlavoredMarlinPolargraphe = true;
 	boolean asFlavoredMakelangeloFirmware = false;
 	
+	public ColorRGB getColorForT_Index(int t){
+	    // TODO should have a way to be redefined ( like a static map editable by the user.)
+	    // TODO and so this map should be storeed (save on exit app , and reloaded on app start) by the Prefrences system implemented ...
+	    switch(t){
+		case 0 : return new ColorRGB(Color.PINK);
+		case 1 : return new ColorRGB(Color.BLUE);
+	    }
+	    
+	    return new ColorRGB(Color.YELLOW);// default color black ?
+	}
 	/**
 	 * ?? pour les test trouver une methode pour comparer avec le resultat d'un fonction draw arc ?
 	 * http://underpop.online.fr/j/java/help/drawing-arcs-graphics-and-java-2d.html.gz
@@ -121,6 +131,15 @@ public class LoadGCode implements TurtleLoader {
 				String[] tokens = pieces[0].split("\\s");
 				if (tokens.length == 0) continue;
 				
+				//
+				String tCodeToken = tokenExists("T",tokens);
+					if(tCodeToken!=null && tokens.length ==1) {	
+						   int marlinToolNum = Integer.parseInt(tCodeToken.substring(1));
+						   penDownColor = getColorForT_Index(marlinToolNum);
+						turtle.setColor(penDownColor);
+					}
+				//
+				
 				String mCodeToken=tokenExists("M",tokens);
 				if(mCodeToken!=null) {
 					int mCode = Integer.parseInt(mCodeToken.substring(1));
@@ -143,9 +162,20 @@ public class LoadGCode implements TurtleLoader {
 					    }
 					    break;
 					case 6:
-						// tool change
+						// tool change 
+					    /*
+					    // PPAC37 To reveiw should have a setColor of the color defined for the tool num ?
+					    in 3D printing slicer use marlin G-code T0 for the first tool/extrudeur , T1 , T...
+					    So the paraméter in marlin g-code flavor is an tool index and not a color.
+					    So we need a default marlin Tool index to color , to set a color for the setColor of the turtle (on not a 0 or 1 ... )
+					    */
 						String color = tokenExists("T",tokens);
-						penDownColor = new ColorRGB(Integer.parseInt(color.substring(1)));
+						if ( asFlavoredMakelangeloFirmware){
+						    penDownColor = new ColorRGB(Integer.parseInt(color.substring(1)));
+						}else{
+						   int marlinToolNum = Integer.parseInt(color.substring(1));
+						   penDownColor = getColorForT_Index(marlinToolNum);
+						}
 						turtle.setColor(penDownColor);
 						break;
 					case 300: 
