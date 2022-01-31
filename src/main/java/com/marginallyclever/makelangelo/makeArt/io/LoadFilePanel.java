@@ -3,6 +3,7 @@ package com.marginallyclever.makelangelo.makeArt.io;
 import com.jogamp.opengl.GL2;
 import com.marginallyclever.convenience.CommandLineOptions;
 import com.marginallyclever.makelangelo.Translator;
+import com.marginallyclever.makelangelo.makeArt.ResizeTurtleToPaperAction;
 import com.marginallyclever.makelangelo.makeArt.TransformedImage;
 import com.marginallyclever.makelangelo.makeArt.io.image.ConvertImagePanel;
 import com.marginallyclever.makelangelo.makeArt.io.vector.TurtleFactory;
@@ -19,6 +20,7 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
 import java.io.FileInputStream;
 import java.util.ArrayList;
 
@@ -28,7 +30,7 @@ public class LoadFilePanel extends JPanel implements PreviewListener {
 	private static final long serialVersionUID = 1L;
 	private Paper myPaper;
 
-	private JFileChooser fc = new JFileChooser();
+	private static JFileChooser fc = new JFileChooser();
 	private JButton bChoose = new JButton(Translator.get("Open"));
 	private JLabel filename = new JLabel();
 
@@ -85,6 +87,10 @@ public class LoadFilePanel extends JPanel implements PreviewListener {
 				mySubPreviewListener = myConvertImage;
 			} else {
 				Turtle t = TurtleFactory.load(filename);
+				// by popular demand, resize turtle to fit paper
+				ResizeTurtleToPaperAction resize = new ResizeTurtleToPaperAction(myPaper,false,"");
+				t = resize.run(t);
+				
 				notifyListeners(new ActionEvent(t,0,"turtle"));
 			}
 			previousFile = filename;
@@ -146,5 +152,13 @@ public class LoadFilePanel extends JPanel implements PreviewListener {
 		frame.add(new LoadFilePanel(new Paper(),""));
 		frame.pack();
 		frame.setVisible(true);
+	}
+
+	public static String getLastPath() {
+		return fc.getCurrentDirectory().toString();
+	}
+	
+	public static void setLastPath(String lastPath) {
+		fc.setCurrentDirectory((lastPath==null?null : new File(lastPath)));
 	}
 }

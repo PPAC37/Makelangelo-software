@@ -158,7 +158,7 @@ TODO study case code change / xml rework / implication (no back compatibility )
 
 	<string>
 		<key>ConverterCMYKNote</key>
-		<value><![CDATA[<html>先黄，青，洋红色，然后再黑色.</html></body>]]></value>
+		<value><![CDATA[先黄，青，洋红色，然后再黑色.]]></value>
 		<hint>CMYK converter hint</hint>
 	</string>
 
@@ -934,7 +934,7 @@ TODO study case code change / xml rework / implication (no back compatibility )
 	</string>
 	<string>
 		<key>penToolLiftSpeed</key>
-		<value>提升速度</value>
+		<value><!-- needs update -->提升速度</value>
 		<hint>Adjust pen tool</hint>
 	</string>
 	<string>
