@@ -66,8 +66,7 @@ public class TranslatorTests {
 	    
 //	    try {
 		//Pre requis
-	    // Bug Introduced commenting : 	
-	    // Translator.start();
+	    Translator.start();
 		//Where to look
 		String baseDirToSearch = "src" + File.separator + "main" + File.separator + "java";
 		System.out.printf("PDW=%s\n", new File(".").getAbsolutePath());
