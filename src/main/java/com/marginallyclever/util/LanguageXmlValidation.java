@@ -215,7 +215,8 @@ https://github.com/MarginallyClever/Makelangelo-software/commit/7605a228af378ff7
 		}
 	    }
 	    //
-	    System.out.printf("found %d key , %d known, %d to resolv using english.xml as reference.\n",mapOld.keySet().size(), ssKeyToKeep.size(),ssKeyToResolve.size());
+	    System.out.printf("found %d key , %d known, %d to resolv using english.xml as reference.\n",
+		    mapOld.keySet().size(), ssKeyToKeep.size(),ssKeyToResolve.size());
 	    
 	    Iterator<String> kToResolvIterator = ssKeyToResolve.iterator();
 	    while ( kToResolvIterator.hasNext()){
