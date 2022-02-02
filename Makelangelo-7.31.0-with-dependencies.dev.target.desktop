@@ -1,0 +1,48 @@
+#!/usr/bin/env xdg-open
+# see https://specifications.freedesktop.org/desktop-entry-spec/latest/
+# TODO have to be set +x ( and systeme Security registred ? Ubuntu 20.04)
+
+[Desktop Entry]
+Name=DEV target Makelangelo-7.31.0-with-dependencies (metal)
+GenericName=DEV target Makelangelo-7.31.0-with-dependencies (metal)
+Comment=DEV target Makelangelo-7.31.0-with-dependencies (metal)
+#TODO -nolf arg
+# -Dswing.systemlaf=javax.swing.plaf.metal.MetalLookAndFeel 
+# -Denv=true # ???
+# %F ???
+Exec=java -DEnv.DEV=true -Dswing.systemlaf=javax.swing.plaf.metal.MetalLookAndFeel -jar "./target/Makelangelo-7.31.0-with-dependencies.jar" -nolf %F
+#TODO Path to update if jar moved
+Path=/home/q6/tmp_git_try/PPAC37/Makelangelo-software
+#TODO only for debug to have a terminal for outputs.
+Terminal=true
+Type=Application
+#TODO icon set
+#Icon=openjdk-6
+#Icon=/home/q6/tmp_git_try/PPAC37/Makelangelo-software/src/main/resources/logo.png
+#Icon=/home/q6/tmp_git_try/PPAC37/Makelangelo-software/src/main/resources/logo.svg
+# KO #Icon=/home/q6/tmp_git_try/PPAC37/Makelangelo-software/src/main/resources/favicon.ico
+# convert favicon.ico favicon.png
+# 
+Icon=/home/q6/tmp_git_try/PPAC37/Makelangelo-software/src/main/resources/favicon.png
+
+# TODO ssi posibility to openWith so add the mine type an as argument %F ou %U ? in Exec
+#MimeType=application/x-java-archive;application/java-archive;application/x-jar;application/x-cbt;
+NoDisplay=false
+Categories=Graphics;3DGraphics;Engineering;
+Keywords=3D;Printing;Slicer;slice;3D;printer;convert;gcode;stl;obj;amf;SLA
+
+## TODO
+#X-AppImage-Version=2.3.0+linux.x64.glibc2.12
+#StartupWMClass=PrusaSlicer-2.3.0+linux-x64-202101111322
+#TryExec=/home/q6/bin/prusa3d_linux_2_3_0/PrusaSlicer-2.3.0+linux-x64-202101111322.AppImage
+
+Name[fr_FR]=DEV target Makelangelo-7.31.0-with-dependencies (metal)
+
+#TODO Action ?
+
+#Actions=Uninstall;
+
+#[Uninstall]
+#Name=Remove desktop integration for Repetier-Host
+#Exec="/home/q6/bin/Repetier-Host-x86_64-2.2.4.AppImage" --remove-appimage-desktop-integration
+
