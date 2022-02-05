@@ -10,6 +10,7 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.*;
+import java.util.Locale;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.InvalidPreferencesFormatException;
 import java.util.prefs.Preferences;
@@ -80,8 +81,23 @@ public class MakelangeloSettingPanel {
 		pane.add(Translator.get("MenuLanguageTitle"), LanguagePreferences.buildPanel());
 		pane.add(Translator.get("MenuMetricsTitle"), MetricsPreferences.buildPanel());
 
+		int result;
 		
-		int result = JOptionPane.showConfirmDialog(parentComponent, panel, Translator.get("MenuPreferences"), JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+//		JOptionPane jop = new JOptionPane(panel, JOptionPane.PLAIN_MESSAGE, JOptionPane.OK_CANCEL_OPTION);
+//		jop.setLocale(Locale.FRENCH);
+//		JDialog dialgo = jop.createDialog(parentComponent,Translator.get("MenuPreferences"));
+//		dialgo.setVisible(true);
+//		
+//		
+//		result = dialgo.getDefaultCloseOperation();
+		//
+		Object[] options = {"OK",
+                    "Cancel"};
+			result = JOptionPane.showOptionDialog(parentComponent, panel, Translator.get("MenuPreferences"), JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE,null,options,options[0]);
+			System.out.println(""+result);
+				//
+				result = JOptionPane.showConfirmDialog(parentComponent, panel, Translator.get("MenuPreferences"), JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+				System.out.println(""+result);
 		if (result == JOptionPane.OK_OPTION) {
 			SoundPreferences.save();
 			GFXPreferences.save();
