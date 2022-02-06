@@ -132,18 +132,29 @@ public class LoadGCode implements TurtleLoader {
 	
 				String[] tokens = pieces[0].split("\\s");
 				if (tokens.length == 0) continue;
+	
+				double nx = turtle.getX();
+				double ny = turtle.getY();
+				double nz = oz;
+				double ni = nx;
+				double nj = ny;
+				
+				double ne = oe;
+				
+				boolean codeFound=false;
 				
 				//
 				String tCodeToken = tokenExists("T",tokens);
-					if(tCodeToken!=null && tokens.length ==1) {	
-						   int marlinToolNum = Integer.parseInt(tCodeToken.substring(1));
-						   penDownColor = getColorForT_Index(marlinToolNum);
-						turtle.setColor(penDownColor);
-					}
+				if(tCodeToken!=null && tokens.length ==1) {	
+					   int marlinToolNum = Integer.parseInt(tCodeToken.substring(1));
+					   penDownColor = getColorForT_Index(marlinToolNum);
+					turtle.setColor(penDownColor);
+				}
 				//
 				
 				String mCodeToken=tokenExists("M",tokens);
 				if(mCodeToken!=null) {
+					codeFound=true;
 					int mCode = Integer.parseInt(mCodeToken.substring(1));
 					switch(mCode) {
 					case 0:
@@ -164,7 +175,8 @@ public class LoadGCode implements TurtleLoader {
 					    }
 					    break;
 					case 6:
-						// tool change 
+						// tool change
+						
 					    /*
 					    // PPAC37 To reveiw should have a setColor of the color defined for the tool num ?
 					    in 3D printing slicer use marlin G-code T0 for the first tool/extrudeur , T1 , T...
@@ -179,6 +191,17 @@ public class LoadGCode implements TurtleLoader {
 						   penDownColor = getColorForT_Index(marlinToolNum);
 						}
 						turtle.setColor(penDownColor);
+						break;
+					case 280:
+						// z move
+						double v = Double.valueOf(tokenExists("S",tokens).substring(1));
+						nz = isAbsolute ? v : nz+v;
+						if(nz!=oz) {
+							// z change
+							if(turtle.isUp()) turtle.penDown();
+							else turtle.penUp();
+							oz=nz;
+						}
 						break;
 					case 300: 
 					    //TODO ! 
@@ -209,142 +232,136 @@ public class LoadGCode implements TurtleLoader {
 					}
 				}
 				
-				String gCodeToken=tokenExists("G",tokens);
-				if(gCodeToken!=null) {
-					int gCode = Integer.parseInt(gCodeToken.substring(1));
-					switch(gCode) {
-					case 20: scaleXY=25.4;  break;  // in -> mm
-					case 21: scaleXY= 1.0;  break;  // mm
-					case 28: turtle.setX(0);turtle.setY(0); break; // not true in all case ( some home can be done else where ...)
-					case 90: isAbsolute=true;	break;  // absolute mode
-					case 91: isAbsolute=false;	break;  // relative mode
-					//92 !
-					default:
-						break;
-					}
-				}
-	
-				double nx = turtle.getX();
-				double ny = turtle.getY();
-				double nz = oz;
-				double ni = nx;
-				double nj = ny;
-				double ne = oe;
+				if(!codeFound) {
+					String gCodeToken = tokenExists("G", tokens);
+					if (gCodeToken != null) {
+						int gCode = Integer.parseInt(gCodeToken.substring(1));
+						switch(gCode) {
+						case 20: scaleXY=25.4;  break;  // in -> mm
+						case 21: scaleXY= 1.0;  break;  // mm
+						case 90: isAbsolute=true;	break;  // absolute mode
+						case 91: isAbsolute=false;	break;  // relative mode
+							case 28:
+								turtle.setX(0);
+								turtle.setY(0);
+								break; // not true in all case ( some home can be done else where ...)
+							//92 !
+						default:
+							break;
+						}
 						
-				if(tokenExists("X",tokens)!=null) {
-					double v = Float.valueOf(tokenExists("X",tokens).substring(1)) * scaleXY;
-					nx = isAbsolute ? v : nx+v;
-				}
-				if(tokenExists("Y",tokens)!=null) {
-					double v = Float.valueOf(tokenExists("Y",tokens).substring(1)) * scaleXY;
-					ny = isAbsolute ? v : ny+v;
-				}
-				if(tokenExists("Z",tokens)!=null) {
-					double v = Float.valueOf(tokenExists("Z",tokens).substring(1));  // do not scale
-					nz = isAbsolute ? v : nz+v;
-				}
-				if(tokenExists("I",tokens)!=null) {
-					double v = Float.valueOf(tokenExists("I",tokens).substring(1)) * scaleXY;
-					ni = isAbsolute ? v : ni+v;
-				}
-				if(tokenExists("J",tokens)!=null) {
-					double v = Float.valueOf(tokenExists("J",tokens).substring(1)) * scaleXY;
-					nj = isAbsolute ? v : nj+v;
-				}
-				
-				// need to see if e change for G2/G3 
-				boolean haveE = false;
-				if(tokenExists("E",tokens)!=null) {
-				    haveE = true;
-					double v = Float.valueOf(tokenExists("E",tokens).substring(1)) * scaleXY;
-					ne = isAbsolute ? v : ne+v;
-				}
-				
-				if(gCodeToken!=null) {
-					int gCode = Integer.parseInt(gCodeToken.substring(1));
-					if(gCode==0 || gCode==1) {
-					    if (asFlavoredMarlinPolargraphe){
-					        // Only for marlin-polargraph flavored .gcode
-						if ( gCode == 0){
-						// not totaly true ... G0 E1 is posible ...
-						    turtle.penUp();
-						}else{
-						    turtle.penDown();					  
-						} 
-						if ( haveE){
-						// but may by not
-						if ( ne == oe){ // so no extrusion !? ( excepte a G92 E... or ... ?
-						    turtle.penUp();
-						}else{
-						    turtle.penDown();
+						if (tokenExists("X", tokens) != null) {
+							double v = Float.valueOf(tokenExists("X", tokens).substring(1)) * scaleXY;
+							nx = isAbsolute ? v : nx + v;
 						}
-					    }
-					     
-					    }
-					    if ( asFlavoredMakelangeloFirmware ){
-						// Only for Makelangelo-firmware flavored .gcode
-						if(nz!=oz) {
-							// z change
-							if(turtle.isUp()) turtle.penDown();
-							else turtle.penUp();
-							oz=nz;
+						if (tokenExists("Y", tokens) != null) {
+							double v = Float.valueOf(tokenExists("Y", tokens).substring(1)) * scaleXY;
+							ny = isAbsolute ? v : ny + v;
 						}
-					    }
-					    
-					    if(nx!=ox || ny!=oy) {
-						    turtle.moveTo(nx, ny);
-						    ox=nx;
-						    oy=ny;						    
-					    }
-					    if ( haveE){
-						oe =ne;
-					    }
-					} else if(gCode==2 || gCode==3) {
-						// a G2 or G3 mouve have an E argument ... posibly a "draw"
-						if ( haveE){
-						    // but may by not
-						    if ( ne == oe){ // so no extrusion !? ( excepte a G92 E... or ... ?
-							turtle.penUp();
-						    }else{
-							turtle.penDown();
-						    }
-						}else{
-						    turtle.penUp();
+						if (tokenExists("Z", tokens) != null) {
+							double v = Float.valueOf(tokenExists("Z", tokens).substring(1));  // do not scale
+							nz = isAbsolute ? v : nz + v;
 						}
-						// arc
-						int dir = (gCode==2) ? -1 : 1;
-	
-						double dx = ox - ni;
-						double dy = oy - nj;
-						double radius = Math.sqrt(dx * dx + dy * dy);
-	
-						// find angle of arc (sweep)
-						double angle1 = atan3(dy, dx);
-						double angle2 = atan3(ny - nj, nx - ni);
-						double theta = angle2 - angle1;
-	
-						if (dir > 0 && theta < 0) angle2 += Math.PI * 2.0;
-						else if (dir < 0 && theta > 0) angle1 += Math.PI * 2.0;
-	
-						theta = angle2 - angle1;
-	
-						double len = Math.abs(theta) * radius;
-						double angle3, scale;
-	
-						// TODO turtle support for arcs https://marlinfw.org/docs/gcode/G002-G003.html
-						// Draw the arc from a lot of little line segments.
-						for(double k = 0; k < len; k++) {
-							scale = k / len;
-							angle3 = theta * scale + angle1;
-							double ix = ni + Math.cos(angle3) * radius;
-							double iy = nj + Math.sin(angle3) * radius;
-	
-							turtle.moveTo(ix,iy);
+						if (tokenExists("I", tokens) != null) {
+							double v = Float.valueOf(tokenExists("I", tokens).substring(1)) * scaleXY;
+							ni = isAbsolute ? v : ni + v;
 						}
-						turtle.moveTo(nx,ny);
-						ox=nx;
-						oy=ny;
-						oe=ne;
+						if (tokenExists("J", tokens) != null) {
+							double v = Float.valueOf(tokenExists("J", tokens).substring(1)) * scaleXY;
+							nj = isAbsolute ? v : nj + v;
+						}
+
+						// need to see if e change for G2/G3 
+						boolean haveE = false;
+						if (tokenExists("E", tokens) != null) {
+							haveE = true;
+							double v = Float.valueOf(tokenExists("E", tokens).substring(1)) * scaleXY;
+							ne = isAbsolute ? v : ne + v;
+						}
+
+						if(gCode==0 || gCode==1) {
+							if (asFlavoredMarlinPolargraphe) {
+								// Only for marlin-polargraph flavored .gcode
+								if (gCode == 0) {
+									// not totaly true ... G0 E1 is posible ...
+									turtle.penUp();
+								} else {
+									turtle.penDown();
+								}
+								if (haveE) {
+									// but may by not
+									if (ne == oe) { // so no extrusion !? ( excepte a G92 E... or ... ?
+										turtle.penUp();
+									} else {
+										turtle.penDown();
+									}
+								}
+
+							}
+							if (asFlavoredMakelangeloFirmware) {
+								// Only for Makelangelo-firmware flavored .gcode
+							if(nz!=oz) {
+								// z change
+								if(turtle.isUp()) turtle.penDown();
+								else turtle.penUp();
+								oz=nz;
+								}
+							}
+							if(nx!=ox || ny!=oy) {
+								turtle.moveTo(nx, ny);
+								ox = nx;
+								oy = ny;
+							}
+							if (haveE) {
+								oe = ne;
+							}
+						} else if(gCode==2 || gCode==3) {
+							// a G2 or G3 mouve have an E argument ... posibly a "draw"
+							if (haveE) {
+								// but may by not
+								if (ne == oe) { // so no extrusion !? ( excepte a G92 E... or ... ?
+									turtle.penUp();
+								} else {
+									turtle.penDown();
+								}
+							} else {
+								turtle.penUp();
+							}
+							// arc
+							int dir = (gCode == 2) ? -1 : 1;
+
+							double dx = ox - ni;
+							double dy = oy - nj;
+							double radius = Math.sqrt(dx * dx + dy * dy);
+
+							// find angle of arc (sweep)
+							double angle1 = atan3(dy, dx);
+							double angle2 = atan3(ny - nj, nx - ni);
+							double theta = angle2 - angle1;
+		
+							if (dir > 0 && theta < 0) angle2 += Math.PI * 2.0;
+							else if (dir < 0 && theta > 0) angle1 += Math.PI * 2.0;
+		
+							theta = angle2 - angle1;
+
+							double len = Math.abs(theta) * radius;
+							double angle3, scale;
+
+							// TODO turtle support for arcs https://marlinfw.org/docs/gcode/G002-G003.html
+							// Draw the arc from a lot of little line segments.
+							for (double k = 0; k < len; k++) {
+								scale = k / len;
+								angle3 = theta * scale + angle1;
+								double ix = ni + Math.cos(angle3) * radius;
+								double iy = nj + Math.sin(angle3) * radius;
+
+								turtle.moveTo(ix, iy);
+							}
+							turtle.moveTo(nx,ny);
+							ox=nx;
+							oy=ny;
+							oe = ne;
+						}
 					}
 					// else do nothing.
 				}
