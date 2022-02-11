@@ -1,7 +1,9 @@
 package com.marginallyclever.makelangelo.makeArt.io.vector;
 
+import com.marginallyclever.convenience.ColorRGB;
 import com.marginallyclever.makelangelo.Translator;
 import com.marginallyclever.makelangelo.turtle.Turtle;
+import java.awt.Color;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.json.JSONTokener;
@@ -44,6 +46,7 @@ public class LoadScratch3 implements TurtleLoader {
 			this.value=defaultValue;
 		}
 		
+		@Override
 		public String toString() {
 			return //uniqueID+" "+
 					name+"="+value;
@@ -56,7 +59,7 @@ public class LoadScratch3 implements TurtleLoader {
 
 		public Scratch3List(String _name) {
 			name=_name;
-			contents=new ArrayList<Double>();
+			contents=new ArrayList<>();
 		}
 	};
 	
@@ -81,6 +84,7 @@ public class LoadScratch3 implements TurtleLoader {
 			this.proccode = proccode;
 		}
 		
+		@Override
 		public String toString() {
 			return //uniqueID+" "+
 					proccode+parameters.toString();
@@ -192,11 +196,17 @@ public class LoadScratch3 implements TurtleLoader {
 		
 		// find the first block with opcode=event_whenflagclicked.
 		for( String k : blockKeys ) {
-			JSONObject block = blocks.getJSONObject(k.toString());
-			String opcode = block.getString("opcode");
-			if(opcode.equals("event_whenflagclicked")) {
-				parseScratchCode(k);
-				return;
+			Object blocks_get_h = blocks.get(k);
+			if (!(blocks_get_h instanceof JSONObject)) {
+				// // TODO somethinge is not what expected ... maybe a lost variable in the scratch projet ...
+				logger.debug("not expected: {} instanceof::{}", blocks_get_h, blocks_get_h.getClass().toString());
+			} else {
+				JSONObject block = blocks.getJSONObject(k.toString());
+				String opcode = block.getString("opcode");
+				if (opcode.equals("event_whenflagclicked")) {
+					parseScratchCode(k);
+					return;
+				}
 			}
 		}
 		throw new Exception("WhenFlagClicked block not found.");
@@ -223,7 +233,7 @@ public class LoadScratch3 implements TurtleLoader {
 			case "event_whenflagclicked":	doStart(currentBlock);					break;
 			case "control_repeat":			doRepeat(currentBlock);  				break;
 			case "control_repeat_until":	doRepeatUntil(currentBlock);			break;
-			case "control_forever":			doRepeatForever(currentBlock);			break;
+			case "control_forever":			doRepeatForever(currentBlock);			break;// c'est vache 
 			case "control_if":				doIf(currentBlock);						break;
 			case "control_if_else":			doIfElse(currentBlock);					break;
 			case "control_stop":
@@ -260,6 +270,9 @@ public class LoadScratch3 implements TurtleLoader {
 			case "motion_sety": 			doMotionSetY(currentBlock);  			break;
 			case "pen_penDown":				myTurtle.penDown();						break;
 			case "pen_penUp":				myTurtle.penUp();						break;
+			
+			case "pen_setPenColorToColor":	doSetColor(currentBlock);break;
+			case "pen_changePenColorParamBy":	doSetChangeColorBy(currentBlock);break;
 			default: logger.debug("Ignored {}", opcode);
 			}
 
@@ -271,6 +284,9 @@ public class LoadScratch3 implements TurtleLoader {
 		logger.debug("START");
 		// reset the turtle object
 		myTurtle = new Turtle();
+		// The default Scratch3 orientation semble etre 90°
+		//myTurtle.turn(-90);
+		myTurtle.setColor(new ColorRGB(Color.BLACK));
 	}
 
 	private void doIfElse(JSONObject currentBlock) throws Exception {
@@ -341,9 +357,9 @@ public class LoadScratch3 implements TurtleLoader {
 	private void doRepeatForever(JSONObject currentBlock) throws Exception {
 		logger.debug("REPEAT FOREVER");
 		String substack = (String)findInputInBlock(currentBlock,"SUBSTACK");
-		while(true) {
+		//while(true) {
 			parseScratchCode(substack);
-		}
+		//}
 	}
 
 	private void doRepeatUntil(JSONObject currentBlock) throws Exception {
@@ -393,19 +409,19 @@ public class LoadScratch3 implements TurtleLoader {
 	private void doMotionPointInDirection(JSONObject currentBlock) throws Exception {
 		double v = resolveValue(findInputInBlock(currentBlock,"DIRECTION"));
 		logger.debug("POINT AT {}",v);
-		myTurtle.setAngle(v);
+		myTurtle.setAngle(v-90.0);//a orientation 90° diffrence between Turtle and Scratch
 	}
 	
 	private void doMotionTurnLeft(JSONObject currentBlock) throws Exception {
 		double v = resolveValue(findInputInBlock(currentBlock,"DEGREES"));
 		logger.debug("LEFT {}",v);
-		myTurtle.setAngle(myTurtle.getAngle()+v);
+		myTurtle.setAngle(myTurtle.getAngle()+v);//myTurtle.turn(v);
 	}
 	
 	private void doMotionTurnRight(JSONObject currentBlock) throws Exception {
 		double v = resolveValue(findInputInBlock(currentBlock,"DEGREES"));
 		logger.debug("RIGHT {}",v);
-		myTurtle.setAngle(myTurtle.getAngle()-v);
+		myTurtle.setAngle(myTurtle.getAngle()-v);//myTurtle.turn(-v);
 	}
 
 	private void doMotionMoveSteps(JSONObject currentBlock) throws Exception {
@@ -439,6 +455,39 @@ public class LoadScratch3 implements TurtleLoader {
 		myTurtle.moveTo(myTurtle.getX(),v);
 	}
 	
+
+	private void doSetColor(JSONObject currentBlock) throws Exception {
+		logger.debug("pen_setPenColorToColor COLOR");
+		JSONObject inputs = (JSONObject) currentBlock.get("inputs");
+		JSONArray jColor = (JSONArray) inputs.get("COLOR");
+		double dColor = resolveValue(jColor.get(1));
+		final ColorRGB colorRGB = new ColorRGB(((int)dColor)&0xFFFFFF);
+		logger.debug("pen_setPenColorToColor COLOR {}", colorRGB.toString());
+//		myTurtle.setColor(colorRGB); // TODO find wy i need a punUp+mouve or bug render
+	}
+	private void doSetChangeColorBy(JSONObject currentBlock) throws Exception {
+		logger.debug("pen_changePenColorParamBy COLOR");
+		JSONObject inputs = (JSONObject) currentBlock.get("inputs");
+		JSONArray jColor = (JSONArray) inputs.get("VALUE");
+		double dColor = resolveValue(jColor.get(1));
+		//??COLOR_PARAM = color ?
+		//?? HSB/HSV colors cf https://en.scratch-wiki.info/wiki/Computer_Colors
+		//https://stackoverflow.com/questions/2997656/how-can-i-use-the-hsl-colorspace-in-java
+		
+		Color cOld = new Color(myTurtle.getColor().toInt());
+		float[] RGBtoHSB = cOld.RGBtoHSB(cOld.getRed(), cOld.getGreen(), cOld.getBlue(), null);
+		float hue = RGBtoHSB[0];// 0.9f; //hue
+		float saturation = RGBtoHSB[1];//1.0f; //saturation
+		float brightness = RGBtoHSB[2];//0.8f; //brightness
+
+		//???
+		hue = hue + (float)(360.0/dColor);
+		
+		Color cTmp = Color.getHSBColor(hue, saturation, brightness);
+		myTurtle.setColor(new ColorRGB(cTmp));
+		// KO not rgb color .... // myTurtle.setColor(new ColorRGB((int)(myTurtle.getColor().toInt()+((int)dColor))));
+	}
+
 	/**
 	 * Find and return currentBlock/inputs/subKey/(first element). 
 	 * @param currentBlock the block to search.
@@ -448,7 +497,13 @@ public class LoadScratch3 implements TurtleLoader {
 	 */
 	private Object findInputInBlock(JSONObject currentBlock,String subKey) throws Exception {
 		JSONObject inputs = currentBlock.getJSONObject("inputs");
-		JSONArray subKeyArray = (JSONArray)inputs.get(subKey);
+		try {
+			JSONArray subKeyArray = (JSONArray) inputs.get(subKey);
+			return subKeyArray.get(1);
+		} catch (Exception e) {
+		}
+		inputs = currentBlock.getJSONObject("fields");
+		JSONArray subKeyArray = (JSONArray) inputs.get(subKey);
 		return subKeyArray.get(1);
 	}
 
@@ -610,6 +665,8 @@ public class LoadScratch3 implements TurtleLoader {
 		// find the blocks with opcode=procedures_definition.
 		for( String k : blockKeys ) {
 			String uniqueID = k.toString();
+			Object blocks_get_uniqueID = blocks.get(uniqueID);
+			if ( blocks_get_uniqueID instanceof JSONObject){
 			JSONObject currentBlock = blocks.getJSONObject(uniqueID);
 			String opcode = currentBlock.getString("opcode");
 			if(opcode.equals("procedures_definition")) {
@@ -622,6 +679,11 @@ public class LoadScratch3 implements TurtleLoader {
 				scratchProcedures.add(p);
 				buildParameterListForProcedure(prototypeBlock,p);
 				logger.debug("procedure found: {}",p.toString());
+			}
+			}
+			else{
+				// TODO somethinge is not what expected ... maybe a lost variable in the scratch projet ...
+				logger.debug("not expected: {} instanceof::{}",blocks_get_uniqueID,blocks_get_uniqueID.getClass().toString());
 			}
 		}
 	}
@@ -731,10 +793,20 @@ public class LoadScratch3 implements TurtleLoader {
 			case 8:  // angle
 			// 9 is color (#rrggbbaa)
 			case 10:  // string, try to parse as number
-				return Double.parseDouble(currentArray.getString(1));
+				//return Double.parseDouble(currentArray.getString(1));
+				return Double.parseDouble(currentArray.get(1).toString());
 			case 12:  // variable
 				return (double)getScratchVariable(currentArray.getString(2)).value; 
 			// 13 is list [name,id,x,y]
+			case 9:  // ??? color value [9, "#60bf54"] 
+				double res = 0;
+				try {
+					logger.debug("a color {}",currentArray.getString(1));
+					ColorRGB color = new ColorRGB(Integer.parseInt(currentArray.getString(1).substring(1), 16) & 0xFFFFFF);
+					res = color.toInt();
+					logger.debug("a color {}",color.toString());
+				}catch (Exception e ){}
+				return res;  
 			default: throw new Exception("resolveValue unknown value type "+currentArray.getInt(0));
 			}
 		} else if(currentObject instanceof String) {
