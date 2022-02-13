@@ -449,15 +449,11 @@ public class LoadScratch3 implements TurtleLoader {
 	}
 	
 	private void doSetPenColor(JSONObject currentBlock) throws Exception {
-		String c = (String)findInputInBlock(currentBlock,"COLOR");
-		if(c.startsWith("#")) {
-			c = c.substring(1);
-			int r = Integer.parseInt(c.substring(0,2));
-			int g = Integer.parseInt(c.substring(2,4));
-			int b = Integer.parseInt(c.substring(4));
-			logger.debug("SET COLOR {}",c);
-			myTurtle.setColor(new ColorRGB(r,g,b));
-		}
+		double dColor = resolveValue(findInputInBlock(currentBlock,"COLOR"));
+		final ColorRGB colorRGB = new ColorRGB(((int)dColor)&0xFFFFFF);
+		logger.debug("pen_setPenColorToColor COLOR {}", colorRGB.toString());
+		myTurtle.setColor(colorRGB); // TODO find wy i need a move after a setColor befor a penUp/Down or the Makelangelo render dont show anything (but the number of segment is visible in the view slider ... like as the color is store in turtel.x the render take it as a move or someting like that ...)
+
 	}
 	
 	/**
@@ -771,6 +767,15 @@ public class LoadScratch3 implements TurtleLoader {
 			// 9 is color (#rrggbbaa)
 			case 10:  // string, try to parse as number
 				return parseNumber(currentArray.get(1));
+			case 9:  // color value [9, "#60bf54"] 
+				double res = 0;
+				try {
+					logger.debug("a color {}",currentArray.getString(1));
+					ColorRGB color = new ColorRGB(Integer.parseInt(currentArray.getString(1).substring(1), 16) & 0xFFFFFF);
+					res = color.toInt();
+					logger.debug("a color {}",color.toString());
+				}catch (Exception e ){}
+				return res;  
 			case 12:  // variable
 				return (double)getScratchVariable(currentArray.getString(2)).value; 
 			// 13 is list [name,id,x,y]
