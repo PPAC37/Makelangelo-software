@@ -24,7 +24,7 @@ public class TextInterfaceToListeners extends JPanel {
 	private static final Logger logger = LoggerFactory.getLogger(TextInterfaceToListeners.class);
 	private static final long serialVersionUID = 7996257740483513358L;
 	private JTextField commandLine = new JTextField(60);
-	private JButton send = new JButton("Send");
+	private JButton send = new JButton("Send");//todo Traduction.get
 
 	public TextInterfaceToListeners() {
 		super();

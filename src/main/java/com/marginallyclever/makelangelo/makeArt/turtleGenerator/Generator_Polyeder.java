@@ -115,6 +115,7 @@ public class Generator_Polyeder extends TurtleGenerator {
 	public Generator_Polyeder() {
 		super();
 		
+		//todo Traduction.get somewhere to be able to translate model names ? but dangerous if bad translation create same name for diffrent model ...
 		models=new ArrayList<Model>();
 		addModel("Cube",new int[] {4,4,1,1,1,4,0,1,0,4,1,1,1,4,0,4,0,0,0,0});
 		addModel("Tetrahedron", new int [] {3,3,1,0,3,1,0,3,1,0});
