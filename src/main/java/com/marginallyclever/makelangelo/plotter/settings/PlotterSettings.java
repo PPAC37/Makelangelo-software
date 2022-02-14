@@ -92,6 +92,7 @@ public class PlotterSettings implements Serializable {
 		startingPositionIndex = 4;
 
 		hardwareName = "Makelangelo 5";
+		loadConfig(robotUID);// to load back Pref saved value ... but is this the good way (Overridable methode call in the constructor) and  suffisent for all case ?
 	}
 
 	// OBSERVER PATTERN START
@@ -154,8 +155,13 @@ public class PlotterSettings implements Serializable {
 		return robotUID;
 	}
 
+	/**
+	 * TODO debug when used if have to loadConfig or not ...
+	 * @param robotUID 
+	 */
 	protected void setRobotUID(long robotUID) {
 		this.robotUID = robotUID;
+		// ??? loadConfig(robotUID);//
 	}
 
 	public boolean isRegistered() {
