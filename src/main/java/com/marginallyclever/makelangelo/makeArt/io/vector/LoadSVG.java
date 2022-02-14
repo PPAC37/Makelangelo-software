@@ -58,7 +58,7 @@ public class LoadSVG implements TurtleLoader {
 		parseAll(document);
 		
 		Rectangle2D.Double r = myTurtle.getBounds();
-		myTurtle.translate(-r.width/2,-r.height/2);
+		//myTurtle.translate(-r.width/2,-r.height/2);
 		myTurtle.scale(1, -1);
 		
 		return myTurtle;
@@ -313,6 +313,62 @@ public class LoadSVG implements TurtleLoader {
 	    }
 	}
 	
+	public void outputSegmentItemDebug(SVGPathSeg item){
+//		item.getPathSegTypeAsLetter();
+//		item.getPathSegType();
+//		
+//		item.getClass().toString();
+		System.out.printf("%4d %s :: %s // %s\n",item.getPathSegType(),item.getPathSegTypeAsLetter(),((SVGItem)item).getValueAsString(),item.getClass().toString());
+		if ( false )
+		switch( item.getPathSegType() ) {
+				case SVGPathSeg.PATHSEG_CLOSEPATH:  // Z z
+					{
+						logger.debug("Close path");
+					}
+					break;
+				case SVGPathSeg.PATHSEG_MOVETO_ABS:  // M
+					{
+						SVGPathSegMovetoAbs path = (SVGPathSegMovetoAbs)item;
+						logger.debug("Move Abs x{} y{}", path.getX(), path.getY());
+					
+					}
+					break;
+				case SVGPathSeg.PATHSEG_MOVETO_REL:  // m
+					{
+						SVGPathSegMovetoRel path = (SVGPathSegMovetoRel)item;
+						logger.debug("Move Rel x{} y{}", path.getX(), path.getY());
+					}
+					break;
+					//
+	//				case SVGPathSeg.PATHSEG_LINETO_HORIZONTAL_ABS:
+				case SVGPathSeg.PATHSEG_LINETO_ABS:  // L H V
+					{
+						SVGPathSegLinetoAbs path = (SVGPathSegLinetoAbs)item;
+						logger.debug("Line Abs x{} y{}", path.getX(), path.getY());
+					}
+					break;
+				case SVGPathSeg.PATHSEG_LINETO_REL:  // l h v
+					{
+						SVGPathSegLinetoRel path = (SVGPathSegLinetoRel)item;
+						logger.debug("Line Rel x{} y{}", path.getX(), path.getY());
+					}
+					break;
+				case SVGPathSeg.PATHSEG_CURVETO_CUBIC_ABS: // C c
+					{
+						SVGPathSegCurvetoCubicAbs path = (SVGPathSegCurvetoCubicAbs)item;
+						logger.debug("Curve Cubic Abs x{}  y{}", path.getX(), path.getY());
+						logger.debug("               1x{} 1y{}", path.getX1(), path.getY1());
+						logger.debug("               2x{} 2y{}", path.getX2(), path.getY2());
+					}
+					break;
+				default:
+					{
+						String m2="Found unknown SVGPathSeg type "+((SVGItem)item).getValueAsString();
+						logger.debug(m2+" "+item.getPathSegType());
+					}
+		}
+	}
+	
 	/**
 	 * Parse through all the SVG path elements and raster them to gcode.
 	 * @param paths the source of the elements
@@ -331,20 +387,38 @@ public class LoadSVG implements TurtleLoader {
 	    		continue;
 	    	}
 	    	SVGOMPathElement element = ((SVGOMPathElement)paths.item( iPath ));
-			if(isElementStrokeNone(element)) 
+			if(isElementStrokeNone(element)) {
+				logger.debug("for continue StrokeNone");
 				continue;
+			}
 			
 			Matrix3d m = getMatrixFromElement(element);
 			Vector3d v;
 
 	    	SVGPathSegList pathList = element.getNormalizedPathSegList();
-	    	//SVGPathSegList pathList = element.getPathSegList();
+	    	//
+			SVGPathSegList pathListNN = element.getPathSegList();
+			System.out.printf("%d ... %d\n",pathListNN.getNumberOfItems(),pathList.getNumberOfItems());
+			//System.out.printf("%s ... %s\n",pathListNN,pathList);
+			
+			
+			
 	    	int itemCount = pathList.getNumberOfItems();
+			for(int i=0; i<itemCount; i++) {
+				
+				SVGPathSeg item = pathList.getItem(i);
+				SVGPathSeg itemNN = pathListNN.getItem(i);
+				outputSegmentItemDebug(itemNN);
+				outputSegmentItemDebug(item);
+				System.out.println("");
+				//System.out.printf("\n%s\n%s\n",item.getPathSegTypeAsLetter(),itemNN.getPathSegTypeAsLetter());
+			
+			}
 	    	logger.debug("Node has {} elements.", itemCount);
 	    	int sinceClosePath=0;
 	    	
 			for(int i=0; i<itemCount; i++) {
-				++sinceClosePath;
+				sinceClosePath++;
 				SVGPathSeg item = pathList.getItem(i);
 				logger.debug("segType={}", item.getClass().getSimpleName());
 				switch( item.getPathSegType() ) {
@@ -353,7 +427,11 @@ public class LoadSVG implements TurtleLoader {
 						logger.debug("Close path");
 						v = transform(firstX,firstY,m);
 						myTurtle.moveTo(v.x,v.y);
+						//if ( )
 						sinceClosePath=0;
+						
+//							px = firstX;
+//							py = firstY;
 					}
 					break;
 				case SVGPathSeg.PATHSEG_MOVETO_ABS:  // M
@@ -390,6 +468,11 @@ public class LoadSVG implements TurtleLoader {
 						logger.debug("Line Abs x{} y{}", path.getX(), path.getY());
 						px = path.getX();
 						py = path.getY();
+						
+						if(sinceClosePath==1) {
+							firstX = px;
+							firstY = py;
+						}
 						v = transform(px,py,m);
 						myTurtle.moveTo(v.x,v.y);
 					}
@@ -411,6 +494,10 @@ public class LoadSVG implements TurtleLoader {
 						logger.debug("               1x{} 1y{}", path.getX1(), path.getY1());
 						logger.debug("               2x{} 2y{}", path.getX2(), path.getY2());
 
+						if(sinceClosePath==1) {
+							firstX = px;
+							firstY = py;
+						}
 						// x0,y0 is the first point
 						double x0=px;
 						double y0=py;
@@ -444,10 +531,11 @@ public class LoadSVG implements TurtleLoader {
 				default:
 					{
 						String m2="Found unknown SVGPathSeg type "+((SVGItem)item).getValueAsString();
-						logger.debug(m2);
+						logger.debug(m2+" "+item.getPathSegType());
 						throw new Exception(m2);
 					}
 				}
+				System.out.printf("%f %f\n",myTurtle.getX(),myTurtle.getY());
 			}
 		}
 	}
@@ -477,6 +565,9 @@ public class LoadSVG implements TurtleLoader {
 			m.m00 = svgMatrix.getA();	m.m10 = svgMatrix.getB();	m.m20 = 0;
 			m.m01 = svgMatrix.getC();	m.m11 = svgMatrix.getD();	m.m21 = 0;
 			m.m02 = svgMatrix.getE();	m.m12 = svgMatrix.getF();	m.m22 = 1;
+			
+			
+			m.setIdentity();
 		}
 		catch(Exception e) {
 			m.setIdentity();
