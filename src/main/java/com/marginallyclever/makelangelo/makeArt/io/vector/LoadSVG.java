@@ -4,6 +4,7 @@ import com.marginallyclever.convenience.Bezier;
 import com.marginallyclever.convenience.ColorRGB;
 import com.marginallyclever.convenience.Point2D;
 import com.marginallyclever.makelangelo.turtle.Turtle;
+import java.awt.Color;
 import org.apache.batik.anim.dom.*;
 import org.apache.batik.bridge.*;
 import org.apache.batik.dom.svg.SVGItem;
@@ -424,10 +425,18 @@ public class LoadSVG implements TurtleLoader {
 						double y2=path.getY2();
 						Bezier b = new Bezier(x0,y0,x1,y1,x2,y2,x3,y3);
 						ArrayList<Point2D> points = b.generateCurvePoints(0.1);
+						myTurtle.penUp();
+						myTurtle.setColor(new ColorRGB(Color.red));
+						myTurtle.moveTo(myTurtle.getX(),myTurtle.getY());
+						myTurtle.penDown();
 						for(Point2D p2 : points) {
 							v = transform(p2.x,p2.y,m);
 							myTurtle.moveTo(v.x,v.y);
 						}
+						myTurtle.penUp();
+						myTurtle.setColor(new ColorRGB(Color.black));
+						myTurtle.moveTo(myTurtle.getX(),myTurtle.getY());
+						myTurtle.penDown();
 						px=x3;
 						py=y3;
 					}
