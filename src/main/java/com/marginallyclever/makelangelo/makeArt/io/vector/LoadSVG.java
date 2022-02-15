@@ -27,6 +27,12 @@ import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 
 /**
+ * only for "basic"/"simple" SVG. ( only for simple elements : path, circle, rect, ...).
+ * no pattern, no group, no symbole, no fill, no text / font ... no idRef, (no tree structured interpretation implemented currently.)
+ * 
+ * ( under inkscape convert text /ungroup to path, ... to get the "simpliest svg" )
+ * or use LoadDXF with a to eps then to dxf external convertor as in https://en.wikibooks.org/wiki/OpenSCAD_User_Manual/Other_2D_formats
+ * 
  * @author Dan Royer
  * See https://www.w3.org/TR/SVG/paths.html
  */
