@@ -21,6 +21,10 @@ import javax.vecmath.Vector3d;
 import java.awt.geom.Rectangle2D;
 import java.io.InputStream;
 import java.util.ArrayList;
+import org.apache.xpath.jaxp.XPathExpressionImpl;
+import org.w3c.dom.DOMException;
+import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.Node;
 
 /**
  * @author Dan Royer
@@ -52,6 +56,13 @@ public class LoadSVG implements TurtleLoader {
 		Document document = newDocumentFromInputStream(in);
 		initSVGDOM(document);
 		
+		//
+		//
+		//
+		
+		Document doc = document;
+		outputSVGDocument(doc, document);
+		
 	    myTurtle = new Turtle();
 		myTurtle.setColor(new ColorRGB(0,0,0));
 		parseAll(document);
@@ -62,10 +73,115 @@ public class LoadSVG implements TurtleLoader {
 		
 		return myTurtle;
 	}
+
+	public void outputSVGDocument(Document doc, Document document) throws DOMException {
+		outputDocumentInfos(doc);
+		
+		SVGDocument svg = (SVGDocument)document;
+		//System.out.printf("%s : %s\n","",);
+		String domain = svg.getDomain();
+		System.out.printf("%s : %s\n","Domain",domain);
+		String referrer = svg.getReferrer();
+		System.out.printf("%s : %s\n","Referrer",referrer);
+		SVGSVGElement rootElement = svg.getRootElement();
+		System.out.printf("%s : %s\n","RootElement",rootElement);
+		//System.out.printf("%s : %s\n","RootElement count : ",rootElement.getStyle());
+		String title = svg.getTitle();
+		System.out.printf("%s : %s\n","Title",title);
+		String url = svg.getURL();
+		System.out.printf("%s : %s\n","URL",url);
+		
+		//
+		//
+		//
+		String id = rootElement.getId();
+		System.out.printf("%s : %s\n","Id",id);
+		SVGAnimatedLength height = rootElement.getHeight();
+		System.out.printf("%s : %s\n","Height",height.getBaseVal().getValueAsString());
+		SVGAnimatedLength width = rootElement.getWidth();
+		System.out.printf("%s : %s\n","Width",width.getBaseVal().getValueAsString());
+		String contentScriptType = rootElement.getContentScriptType();
+		System.out.printf("%s : %s\n","ContentScriptType",contentScriptType);
+		String contentStyleType = rootElement.getContentStyleType();
+		System.out.printf("%s : %s\n","ContentStyleType",contentStyleType);
+		//outputElementAttributs(rootElement);
+		int profondeur = 1;
+		
+		outputElementNodes(rootElement, profondeur,true);
+	}
+
+	public void outputElementAttributs(Node element, int profondeur) throws DOMException {
+		//rootElement.get
+		if (element.hasAttributes()) {
+			NamedNodeMap attributes = element.getAttributes();
+			if (attributes != null) {
+				int length = attributes.getLength();
+				for (int i = 0; i < length; i++) {
+					Node item = attributes.item(i);
+					short nodeType = item.getNodeType();// TODO ? as string 				
+					String nodeName = item.getNodeName();
+					String nodeValue = item.getNodeValue();
+					//System.out.printf(" %3d %s : %s\n", nodeType, nodeName, nodeValue);
+					// nodeType == Node.ATTRIBUTE_NODE
+					System.out.printf(" %"+profondeur+"d %s : %s\n", nodeType, nodeName, nodeValue);
+				}
+			}
+		}
+	}
+
+	public void outputDocumentInfos(Document doc) {
+		String xmlVersion = doc.getXmlVersion();
+		System.out.printf("%s : %s\n","XmlVersion",xmlVersion);
+		String xmlEncoding = doc.getXmlEncoding();
+		System.out.printf("%s : %s\n","XmlEncoding",xmlEncoding);
+		boolean xmlStandalone = doc.getXmlStandalone();
+		System.out.printf("%s : %b\n","XmlStandalone",xmlStandalone);
+		
+		boolean strictErrorChecking = doc.getStrictErrorChecking();
+		System.out.printf("%s : %b\n","StrictErrorChecking",strictErrorChecking);
+		
+		String inputEncoding = doc.getInputEncoding();
+		System.out.printf("%s : %s\n","InputEncoding",inputEncoding);
+		//
+		//
+		//
+	}
+
+	public void outputElementNodes(Node element, int profondeur, boolean recursive) throws DOMException {
+		outputElementAttributs(element,profondeur);
+		if( element.hasChildNodes()){
+			NodeList childNodes = element.getChildNodes();
+			if ( childNodes != null ){
+				int length = childNodes.getLength();
+				for (int i = 0 ; i < length ; i++ ){
+					Node item = childNodes.item(i);
+					short nodeType = item.getNodeType();// TODO ? as string 				
+					String nodeName = item.getNodeName();
+					String nodeValue = item.getNodeValue();
+					if ( nodeType == Node.COMMENT_NODE || nodeType == Node.TEXT_NODE ){
+						// ignored as in a svg ...
+					}else{
+					if ( nodeValue!= null){
+						nodeValue = nodeValue.replaceAll("\n", "\\\\n").replaceAll("\t", "\\\\t");
+					}
+					System.out.printf(" %"+profondeur+"s %2d %s : %s\n","-", nodeType, nodeName, nodeValue);
+					}
+					if ( item.hasChildNodes() ){
+						outputElementNodes(item, profondeur+1, recursive);
+					} 
+				}
+			}
+		}
+	}
 	
 	private void parseAll(Document document) throws Exception {
 		SVGOMSVGElement documentElement = (SVGOMSVGElement)document.getDocumentElement();
 
+		// TODO change this to get a real xml/svg tree exploration / interpretation
+		// TODO pattern with a path element
+		// TODO g with transformation
+		// ... so mutch to do to render a SVG ...
+		
 		logger.debug("...parse path");
 		parsePathElements(    documentElement.getElementsByTagName( "path"     ));
 		logger.debug("...parse polylines");
@@ -140,7 +256,7 @@ public class LoadSVG implements TurtleLoader {
 	
 	private boolean isElementStrokeNone(Element element) {
 		if(element.hasAttribute("style")) {
-			String style = element.getAttribute("style").toLowerCase().replace("\s","");
+			String style = element.getAttribute("style").toLowerCase().replace("\s","");// TODO check the replace ... is this working ?
 			if(style.contains(LABEL_STROKE)) {
 				int k = style.indexOf(LABEL_STROKE);
 				String strokeStyleName = style.substring(k+LABEL_STROKE.length());
@@ -170,6 +286,8 @@ public class LoadSVG implements TurtleLoader {
 	 */
 	private void parseRectElements(NodeList node) throws Exception {
 	    int pathNodeCount = node.getLength();
+		
+	    logger.debug("{} Rects.", pathNodeCount);
 	    for( int iPathNode = 0; iPathNode < pathNodeCount; iPathNode++ ) {
 			Element element = (Element)node.item( iPathNode );
 			if(isElementStrokeNone(element)) 
@@ -213,6 +331,22 @@ public class LoadSVG implements TurtleLoader {
 			arcTurtle(myTurtle, x2,y2, rx,ry, Math.PI *  0.0,Math.PI *  0.5,m);
 			arcTurtle(myTurtle, x1,y2, rx,ry, Math.PI * -1.5,Math.PI * -1.0,m);
 			arcTurtle(myTurtle, x1,y1, rx,ry, Math.PI * -1.0,Math.PI * -0.5,m);
+			
+			// TODO pattern idref as fill attribut ... ( so mutch to do .... )
+			String attributNameFill = "fill";
+			if(element.hasAttribute(attributNameFill)){
+				String attribute = element.getAttribute(attributNameFill);
+				// TODO find how to do this more genericaly / all case ( like using XPath to get  from a attribut value , the element(s)? )
+				if ( attribute != null && !attribute.isBlank() && attribute.startsWith("url(#")){
+
+					String idRef = attribute.substring(5, attribute.indexOf(')'));
+					Element elementById = element.getOwnerDocument().getElementById(idRef);
+					if ( elementById != null){
+						outputElementNodes(elementById, 1, true);
+						// TODO how to use a pattern with a sub element path ...
+					}
+				}
+			}
 	    }
 	}
 
@@ -311,7 +445,24 @@ public class LoadSVG implements TurtleLoader {
 			myTurtle.moveTo(v2.x,v2.y);
 	    }
 	}
-	
+
+	public void outputSVGPathSegList(SVGPathSegList pathList){
+		int size = pathList.getNumberOfItems();
+		for ( int i = 0 ; i < size ; i++){			
+				SVGPathSeg item = pathList.getItem(i);
+				System.out.printf("%s ",((SVGItem)item).getValueAsString());	
+		}
+		System.out.println();
+	}
+	public void outputSVGPathSegListClass(SVGPathSegList pathList){
+		int size = pathList.getNumberOfItems();
+		
+		for ( int i = 0 ; i < size ; i++){			
+				SVGPathSeg item = pathList.getItem(i);
+				System.out.printf("%s %s\n",item.getPathSegType(),item.getClass());	
+		}
+		System.out.println();
+	}
 	/**
 	 * Parse through all the SVG path elements and raster them to gcode.
 	 * @param paths the source of the elements
@@ -337,7 +488,20 @@ public class LoadSVG implements TurtleLoader {
 			Vector3d v;
 
 	    	SVGPathSegList pathList = element.getNormalizedPathSegList();
-	    	//SVGPathSegList pathList = element.getPathSegList();
+			
+			boolean verbosePathSegListNormalisedAndNotNormalised = true;
+			if ( verbosePathSegListNormalisedAndNotNormalised ){
+				outputSVGPathSegList(pathList);
+				SVGPathSegList pathListNN = element.getPathSegList();
+				outputSVGPathSegList(pathListNN);
+				outputSVGPathSegListClass(pathListNN);
+			}
+			
+			boolean useNotNormalizedPathSegList = true;
+			if ( useNotNormalizedPathSegList){
+				pathList = element.getPathSegList();
+			}
+			
 	    	int itemCount = pathList.getNumberOfItems();
 	    	logger.debug("Node has {} elements.", itemCount);
 	    	int sinceClosePath=0;
@@ -430,6 +594,10 @@ public class LoadSVG implements TurtleLoader {
 						}
 						px=x3;
 						py=y3;
+						
+						sinceClosePath=0; // PPAC37 seem to avoid parasite lines.
+//						firstX = px;
+//						firstY = py;
 					}
 					break;
 				default:
