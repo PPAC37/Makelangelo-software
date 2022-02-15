@@ -46,6 +46,7 @@ public class LoadScratch3 implements TurtleLoader {
 			this.value=defaultValue;
 		}
 		
+		@Override
 		public String toString() {
 			return //uniqueID+" "+
 					name+"="+value;
@@ -58,7 +59,7 @@ public class LoadScratch3 implements TurtleLoader {
 
 		public Scratch3List(String _name) {
 			name=_name;
-			contents=new ArrayList<Double>();
+			contents=new ArrayList<>();
 		}
 	};
 	
@@ -83,6 +84,7 @@ public class LoadScratch3 implements TurtleLoader {
 			this.proccode = proccode;
 		}
 		
+		@Override
 		public String toString() {
 			return //uniqueID+" "+
 					proccode+parameters.toString();
@@ -195,7 +197,7 @@ public class LoadScratch3 implements TurtleLoader {
 		
 		// find the first block with opcode=event_whenflagclicked.
 		for( String k : blockKeys ) {
-			JSONObject block = blocks.getJSONObject(k.toString());
+			JSONObject block = blocks.getJSONObject(k);
 			String opcode = block.getString("opcode");
 			if(opcode.equals("event_whenflagclicked")) {
 				parseScratchCode(k);
@@ -452,7 +454,10 @@ public class LoadScratch3 implements TurtleLoader {
 	private void doSetPenColor(JSONObject currentBlock) throws Exception {
 		ColorRGB c = new ColorRGB((int)resolveValue(findInputInBlock(currentBlock,"COLOR")));
 		logger.debug("SET COLOR {}",c);
+		myTurtle.penUp();
 		myTurtle.setColor(c);
+		myTurtle.jumpTo(myTurtle.getX(), myTurtle.getY());// for the render or else it do not render anything 
+		myTurtle.penDown();
 	}
 	
 	/**
@@ -638,7 +643,7 @@ public class LoadScratch3 implements TurtleLoader {
 
 		// find the blocks with opcode=procedures_definition.
 		for( String k : blockKeys ) {
-			String uniqueID = k.toString();
+			String uniqueID = k;
 			Object obj = blocks.get(uniqueID);
 			if(!(obj instanceof JSONObject)) continue;
 
