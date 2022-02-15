@@ -503,7 +503,7 @@ public class LoadSVG implements TurtleLoader {
 				outputSVGPathSegListClass(pathListNN);
 			}
 			
-			boolean useNotNormalizedPathSegList = true;
+			boolean useNotNormalizedPathSegList = false;
 			if ( useNotNormalizedPathSegList){
 				pathList = element.getPathSegList();
 			}
