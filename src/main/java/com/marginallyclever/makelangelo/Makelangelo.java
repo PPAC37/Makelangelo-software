@@ -94,7 +94,7 @@ public final class Makelangelo {
 	
 	private static final String PREFERENCE_SAVE_PATH = "savePath";
 
-	private static Logger logger;
+	protected static Logger logger;
 
 	/**
 	 * Defined in src/resources/makelangelo.properties and uses Maven's resource filtering to update the 
@@ -197,7 +197,7 @@ public final class Makelangelo {
 		if (preferences.getBoolean("Check for updates", false)) checkForUpdate(true);
 	}
 
-	private static void setSystemLookAndFeel() {
+	protected static void setSystemLookAndFeel() {
 		if(!CommandLineOptions.hasOption("-nolf")) {
 	        try {
 	        	UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
@@ -579,7 +579,8 @@ public final class Makelangelo {
 		logger.debug("Open file...");
 		openFileChooser.chooseFile();
 	}
-
+	protected boolean uiAddToRecentFileOnOpenLoadFileDialogue = true;
+	protected boolean uiCreateAndShowOpenLoadFileDialogue = true;
 	public void openFile(String filename) {
 		try {
 			LoadFilePanel loader = new LoadFilePanel(myPaper,filename);
@@ -590,26 +591,28 @@ public final class Makelangelo {
 			if (loader.load(filename)) {
 
 				previewPanel.addListener(loader);
-				JDialog dialog = new JDialog(mainFrame, Translator.get("LoadFilePanel.title"));
-				dialog.add(loader);
-				dialog.setLocationRelativeTo(mainFrame);
-				dialog.setMinimumSize(new Dimension(500,500));
-				dialog.pack();
-				loader.setParent(dialog);
+				if ( uiCreateAndShowOpenLoadFileDialogue ){
+					JDialog dialog = new JDialog(mainFrame, Translator.get("LoadFilePanel.title"));
+					dialog.add(loader);
+					dialog.setLocationRelativeTo(mainFrame);
+					dialog.setMinimumSize(new Dimension(500,500));
+					dialog.pack();
+					loader.setParent(dialog);
 
-				enableMenuBar(false);
-				dialog.addWindowListener(new WindowAdapter() {
-					@Override
-					public void windowClosing(WindowEvent e) {
-						enableMenuBar(true);
-						previewPanel.removeListener(loader);
-						recentFiles.addFilename(filename);
-					}
-				});
+					enableMenuBar(false);
+					dialog.addWindowListener(new WindowAdapter() {
+						@Override
+						public void windowClosing(WindowEvent e) {
+							enableMenuBar(true);
+							previewPanel.removeListener(loader);
+							if ( uiAddToRecentFileOnOpenLoadFileDialogue ) recentFiles.addFilename(filename);
+						}
+					});
 
-				dialog.setVisible(true);
+					dialog.setVisible(true);
+				}
 			} else {
-				recentFiles.addFilename(filename);
+				if ( uiAddToRecentFileOnOpenLoadFileDialogue )  recentFiles.addFilename(filename);
 			}
 		} catch(Exception e) {
 			logger.error("Error while loading the file {}", filename, e);
@@ -794,7 +797,7 @@ public final class Makelangelo {
 	 * }
 	 */
 
-	private Container createContentPane() {
+	protected Container createContentPane() {
 		logger.debug("create content pane...");
 
 		JPanel contentPane = new JPanel(new BorderLayout());
@@ -1003,9 +1006,10 @@ public final class Makelangelo {
 		});
 	}
 
-	private boolean onClosing() {
-		int result = JOptionPane.showConfirmDialog(mainFrame, Translator.get("ConfirmQuitQuestion"),
-				Translator.get("ConfirmQuitTitle"), JOptionPane.YES_NO_OPTION);
+	protected boolean uiAskToConfirmQuit = false;
+	protected boolean onClosing() {
+		int result = uiAskToConfirmQuit?JOptionPane.showConfirmDialog(mainFrame, Translator.get("ConfirmQuitQuestion"),
+				Translator.get("ConfirmQuitTitle"), JOptionPane.YES_NO_OPTION):JOptionPane.YES_OPTION;
 		if (result == JOptionPane.YES_OPTION) {
 			previewPanel.removeListener(myPlotter);
 			mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -1084,4 +1088,18 @@ public final class Makelangelo {
 			makelangeloProgram.run();
 		});
 	}
+	
+	//
+	// Hack for dev and gui test usage
+	//
+	
+    protected JFrame getMainFrame() {
+		return mainFrame;
+    }
+	protected void setDummyMainFrame(){
+		mainFrame = new JFrame();
+	}
+	protected Camera getCamera() {
+		return camera;
+    }
 }
