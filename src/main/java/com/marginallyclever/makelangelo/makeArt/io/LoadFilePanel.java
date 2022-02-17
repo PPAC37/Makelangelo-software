@@ -76,9 +76,9 @@ public class LoadFilePanel extends JPanel implements PreviewListener {
 			} else {
 				Turtle t = TurtleFactory.load(filename);
 				// by popular demand, resize turtle to fit paper
-				ResizeTurtleToPaperAction resize = new ResizeTurtleToPaperAction(myPaper,false,"");
-				t = resize.run(t);
-				
+//				ResizeTurtleToPaperAction resize = new ResizeTurtleToPaperAction(myPaper,false,"");
+//				t = resize.run(t);
+//				
 				notifyListeners(new ActionEvent(t,0,"turtle"));
 				if (parent != null) {
 					parent.dispatchEvent(new WindowEvent(parent, WindowEvent.WINDOW_CLOSING));

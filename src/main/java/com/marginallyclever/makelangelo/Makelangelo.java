@@ -94,7 +94,7 @@ public final class Makelangelo {
 	
 	private static final String PREFERENCE_SAVE_PATH = "savePath";
 
-	private static Logger logger;
+	public static Logger logger;
 
 	/**
 	 * Defined in src/resources/makelangelo.properties and uses Maven's resource filtering to update the 
@@ -105,9 +105,9 @@ public final class Makelangelo {
 
 	private MakelangeloSettingPanel myPreferencesPanel;
 	
-	private Camera camera;
+	public Camera camera;
 	private Plotter myPlotter;
-	private Paper myPaper = new Paper();
+	public  Paper myPaper = new Paper();
 	private Turtle myTurtle = new Turtle();
 	private static boolean isMacOS = false;
 
@@ -794,7 +794,7 @@ public final class Makelangelo {
 	 * }
 	 */
 
-	private Container createContentPane() {
+	public Container createContentPane() {
 		logger.debug("create content pane...");
 
 		JPanel contentPane = new JPanel(new BorderLayout());
@@ -1003,13 +1003,15 @@ public final class Makelangelo {
 		});
 	}
 
-	private boolean onClosing() {
+	public boolean onClosing() {
 		int result = JOptionPane.showConfirmDialog(mainFrame, Translator.get("ConfirmQuitQuestion"),
 				Translator.get("ConfirmQuitTitle"), JOptionPane.YES_NO_OPTION);
 		if (result == JOptionPane.YES_OPTION) {
 			previewPanel.removeListener(myPlotter);
-			mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-			saveWindowSizeAndPosition();
+			if (mainFrame != null) {
+				mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+				saveWindowSizeAndPosition();
+			}
 			myPlotter.getSettings().saveConfig();
 			savePaths();
 
@@ -1018,7 +1020,7 @@ public final class Makelangelo {
 			// exiting
 			new Thread(()->{
 				previewPanel.stop();
-				mainFrame.dispose();
+				if ( mainFrame != null )mainFrame.dispose();
 			}).start();
 			return true;
 		}

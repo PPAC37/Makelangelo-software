@@ -1,8 +1,23 @@
 package com.marginallyclever.makelangelo.makeArt.io.vector;
 
 import com.marginallyclever.convenience.ColorRGB;
+import com.marginallyclever.convenience.CommandLineOptions;
+import com.marginallyclever.makelangelo.Makelangelo;
 import com.marginallyclever.makelangelo.Translator;
+import com.marginallyclever.makelangelo.makeArt.ResizeTurtleToPaperAction;
+import com.marginallyclever.makelangelo.paper.Paper;
+import com.marginallyclever.makelangelo.plotter.Plotter;
+import com.marginallyclever.makelangelo.plotter.plotterRenderer.Machines;
+import com.marginallyclever.makelangelo.plotter.plotterRenderer.PlotterRenderer;
+import com.marginallyclever.makelangelo.preview.Camera;
+import com.marginallyclever.makelangelo.preview.PreviewPanel;
 import com.marginallyclever.makelangelo.turtle.Turtle;
+import com.marginallyclever.makelangelo.turtle.turtleRenderer.TurtleRenderFacade;
+import com.marginallyclever.util.PreferencesHelper;
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.json.JSONTokener;
@@ -11,14 +26,42 @@ import org.slf4j.LoggerFactory;
 
 import javax.swing.filechooser.FileNameExtensionFilter;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
+import java.util.logging.Level;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
+import javax.swing.JPanel;
 
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.GraphicsDevice;
+import java.awt.GraphicsEnvironment;
+import java.awt.Image;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
+import java.awt.Robot;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
+import java.net.URL;
+import java.util.Arrays;
+import java.util.SortedSet;
+import java.util.TreeSet;
+import java.util.logging.Level;
+import java.util.prefs.Preferences;
+import javax.imageio.ImageIO;
+import javax.swing.JButton;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
 /**
  * {@link LoadScratch3} loads a limited set of Scratch 3.0 commands into memory. 
  * We ignore monitors, which are visual displays of variables, booleans, and lists
@@ -34,6 +77,8 @@ public class LoadScratch3 implements TurtleLoader {
 	private static final Logger logger = LoggerFactory.getLogger(LoadScratch3.class);
 	private final String PROJECT_JSON = "project.json";
 	
+	boolean verboseParse = false;
+	
 	private class Scratch3Variable implements Cloneable {
 		public String name;
 		
@@ -46,6 +91,7 @@ public class LoadScratch3 implements TurtleLoader {
 			this.value=defaultValue;
 		}
 		
+		@Override
 		public String toString() {
 			return //uniqueID+" "+
 					name+"="+value;
@@ -113,7 +159,7 @@ public class LoadScratch3 implements TurtleLoader {
 	
 	@Override
 	public Turtle load(InputStream in) throws Exception {
-		logger.debug("Loading...");
+		if ( verboseParse ) logger.debug("Loading...");
 		JSONObject tree = getTreeFromInputStream(in);
 		
 		if(!confirmAtLeastVersion3(tree)) throw new Exception("File must be at least version 3.0.0.");
@@ -131,7 +177,7 @@ public class LoadScratch3 implements TurtleLoader {
 	private JSONObject getTreeFromInputStream(InputStream in) throws FileNotFoundException, IOException {
 		File tempZipFile = extractProjectJSON(in);
 		
-        logger.debug("Parsing JSON file...");
+        if ( verboseParse ) logger.debug("Parsing JSON file...");
         JSONTokener tokener = new JSONTokener(tempZipFile.toURI().toURL().openStream());
         JSONObject tree = new JSONObject(tokener);
 
@@ -141,13 +187,13 @@ public class LoadScratch3 implements TurtleLoader {
 	}
 
 	private File extractProjectJSON(InputStream in) throws FileNotFoundException, IOException {
-		logger.debug("Searching for project.json...");
+		if ( verboseParse ) logger.debug("Searching for project.json...");
 		try (ZipInputStream zipInputStream = new ZipInputStream(in)) {
 			ZipEntry entry;
 			File tempZipFile = null;
 			while ((entry = zipInputStream.getNextEntry()) != null) {
 				if (entry.getName().equals(PROJECT_JSON)) {
-					logger.debug("Found project.json...");
+					if ( verboseParse ) logger.debug("Found project.json...");
 
 					// read buffered stream into temp file.
 					tempZipFile = File.createTempFile("project", "json");
@@ -192,7 +238,7 @@ public class LoadScratch3 implements TurtleLoader {
 	 * @throws Exception
 	 */
 	private void readScratchInstructions() throws Exception {
-		logger.debug("readScratchInstructions ( and do a flagclicked {} times ) ",nbClicOnTheGreenFlag);
+		if ( verboseParse ) logger.debug("readScratchInstructions ( and do a flagclicked {} times ) ",nbClicOnTheGreenFlag);
 		myTurtle = new Turtle();// needed to be init here in case multiple "event_whenflagclicked"
 		int nbGreenFlagParsed_Total = 0;
 		for (int i = 0; i < nbClicOnTheGreenFlag; i++) {
@@ -207,7 +253,7 @@ public class LoadScratch3 implements TurtleLoader {
 					if (block.has(key_scratch_block_opcode)) {
 						String opcode = block.getString(key_scratch_block_opcode);
 						if (opcode.equals("event_whenflagclicked")) {
-							parseScratchCode(k);
+							parseScratchCode(k);// TODO if multiple event_whenflagclicked this is in the Scratch3 interpretor reverse order ...
 							//return; // nop can have multiple "event_whenflagclicked"
 							block_opcode_event_whenflagclicked__count++;
 						}
@@ -243,7 +289,7 @@ public class LoadScratch3 implements TurtleLoader {
 	}
 	
 	private void parseScratchCode(String currentKey) throws Exception {
-		logger.debug("parseScratchCode {}",currentKey);
+		if ( verboseParse ) logger.debug("parseScratchCode {}",currentKey);
 		JSONObject currentBlock = getBlock(currentKey);
 				
 		while(currentBlock!=null) {
@@ -291,23 +337,26 @@ public class LoadScratch3 implements TurtleLoader {
 			case "pen_penDown":				myTurtle.penDown();						break;
 			case "pen_penUp":				myTurtle.penUp();						break;
 			case "pen_setPenColorToColor":	doSetPenColor(currentBlock);			break;
+			case "pen_changePenColorParamBy":	doSetChangeColorBy(currentBlock);break;
+			case "pen_setPenHueToNumber":	doSetPenHueToNumber(currentBlock);break;
+			//
 			default: logger.debug("Ignored {}", opcode);
 			}
 
 			currentKey = findNextBlockKey(currentBlock);
 			if(currentKey==null) break;
 			
-			logger.debug("next block {}",currentKey);
+			if ( verboseParse ) logger.debug("next block {}",currentKey);
 			currentBlock = getBlock(currentKey);
 		}
 	}
 
 	private void doStart(JSONObject currentBlock) {
-		logger.debug("START a block opcode event_whenflagclicked ...");
+		if ( verboseParse ) logger.debug("START a block opcode event_whenflagclicked ...");
 	}
 
 	private void doIfElse(JSONObject currentBlock) throws Exception {
-		logger.debug("IF ELSE");
+		if ( verboseParse ) logger.debug("IF ELSE");
 		String condition = (String)findInputInBlock(currentBlock,"CONDITION");
 		String substack = (String)findInputInBlock(currentBlock,"SUBSTACK");
 		String substack2 = (String)findInputInBlock(currentBlock,"SUBSTACK2");
@@ -321,7 +370,7 @@ public class LoadScratch3 implements TurtleLoader {
 	private void doCall(JSONObject currentBlock) throws Exception {
 		String proccode = (String)findMutationInBlock(currentBlock,"proccode");
 		ArrayList<Object> args = resolveArgumentsForProcedure(currentBlock);
-		logger.debug("CALL {}({})",proccode,args.toString());
+		if ( verboseParse ) logger.debug("CALL {}({})",proccode,args.toString());
 		
 		Scratch3Procedure p = findProcedureWithProccode(proccode);
 		pushStack(p,args);
@@ -363,7 +412,7 @@ public class LoadScratch3 implements TurtleLoader {
 	}
 
 	private void doIf(JSONObject currentBlock) throws Exception {
-		logger.debug("IF");
+		if ( verboseParse ) logger.debug("IF");
 		String condition = (String)findInputInBlock(currentBlock,"CONDITION");
 		String substack = (String)findInputInBlock(currentBlock,"SUBSTACK");
 		if(resolveBoolean(getBlock(condition))) {
@@ -387,7 +436,7 @@ public class LoadScratch3 implements TurtleLoader {
 		if ( foreverThrowAnException ){
 			throw new Exception(Translator.get("LoadScratch3.foreverNotAllowed"));
 		}		
-		logger.debug("REPEAT FOREVER ( if allowed ({}) will only repeat {} times. )",!foreverThrowAnException,loopNbCountInstadeOfForever);
+		if ( verboseParse ) logger.debug("REPEAT FOREVER ( if allowed ({}) will only repeat {} times. )",!foreverThrowAnException,loopNbCountInstadeOfForever);
 		String substack = (String)findInputInBlock(currentBlock,"SUBSTACK");		
 		for (int i = 0 ; i < loopNbCountInstadeOfForever ; i++){			
 			//while(true) { // technically this would work and the program would never end.  It is here for reference.
@@ -397,7 +446,7 @@ public class LoadScratch3 implements TurtleLoader {
 	}
 
 	private void doRepeatUntil(JSONObject currentBlock) throws Exception {
-		logger.debug("REPEAT UNTIL");
+		if ( verboseParse ) logger.debug("REPEAT UNTIL");
 		String condition = (String)findInputInBlock(currentBlock,"CONDITION");
 		String substack = (String)findInputInBlock(currentBlock,"SUBSTACK");
 		
@@ -409,7 +458,7 @@ public class LoadScratch3 implements TurtleLoader {
 	private void doRepeat(JSONObject currentBlock) throws Exception {
 		int count = (int)resolveValue(findInputInBlock(currentBlock,"TIMES"));
 		String substack = (String)findInputInBlock(currentBlock,"SUBSTACK");
-		logger.debug("REPEAT {}",count);
+		if ( verboseParse ) logger.debug("REPEAT {}",count);
 		for(int i=0;i<count;++i) {
 			parseScratchCode(substack);
 		}		
@@ -421,7 +470,7 @@ public class LoadScratch3 implements TurtleLoader {
 		double newValue = resolveValue(findInputInBlock(currentBlock,"VALUE"));
 		// set and report
 		v.value = (double)v.value + newValue;
-		logger.debug("Set {} to {}", v.name, v.value);
+		if ( verboseParse ) logger.debug("Set {} to {}", v.name, v.value);
 	}
 
 	// absolute change
@@ -430,62 +479,62 @@ public class LoadScratch3 implements TurtleLoader {
 		double newValue = resolveValue(findInputInBlock(currentBlock,"VALUE"));
 		// set and report
 		v.value = newValue;
-		logger.debug("Set {} to {}", v.name, v.value);
+		if ( verboseParse ) logger.debug("Set {} to {}", v.name, v.value);
 	}
 
 	private void doMotionGotoXY(JSONObject currentBlock) throws Exception {
 		double px = resolveValue(findInputInBlock(currentBlock,"X"));
 		double py = resolveValue(findInputInBlock(currentBlock,"Y"));
-		logger.debug("GOTO {} {}",px,py);
+		if ( verboseParse ) logger.debug("GOTO {} {}",px,py);
 		myTurtle.moveTo(px, py);
 	}
 
 	private void doMotionPointInDirection(JSONObject currentBlock) throws Exception {
 		double v = resolveValue(findInputInBlock(currentBlock,"DIRECTION"));
-		logger.debug("POINT AT {}",v);
+		if ( verboseParse ) logger.debug("POINT AT {}",v);
 		myTurtle.setAngle(v-90.0);// 0° orientation in turtle = 90° orientation in scratch.
 	}
 	
 	private void doMotionTurnLeft(JSONObject currentBlock) throws Exception {
 		double v = resolveValue(findInputInBlock(currentBlock,"DEGREES"));
-		logger.debug("LEFT {}",v);
-		myTurtle.setAngle(myTurtle.getAngle()+v);
+		if ( verboseParse ) logger.debug("LEFT {}",v);
+		myTurtle.setAngle(myTurtle.getAngle()+v);//myTurtle.turn(v);
 	}
 	
 	private void doMotionTurnRight(JSONObject currentBlock) throws Exception {
 		double v = resolveValue(findInputInBlock(currentBlock,"DEGREES"));
-		logger.debug("RIGHT {}",v);
-		myTurtle.setAngle(myTurtle.getAngle()-v);
+		if ( verboseParse ) logger.debug("RIGHT {}",v);
+		myTurtle.setAngle(myTurtle.getAngle()-v);//myTurtle.turn(-v);
 	}
 
 	private void doMotionMoveSteps(JSONObject currentBlock) throws Exception {
 		double v = resolveValue(findInputInBlock(currentBlock,"STEPS"));
-		logger.debug("MOVE {}",v);
+		if ( verboseParse ) logger.debug("MOVE {}",v);
 		myTurtle.forward(v);
 	}
 	
 	private void doMotionChangeX(JSONObject currentBlock) throws Exception {
 		double v = resolveValue(findInputInBlock(currentBlock,"DX"));
-		logger.debug("MOVE X {}",v);
+		if ( verboseParse ) logger.debug("MOVE X {}",v);
 		myTurtle.moveTo(myTurtle.getX()+v,myTurtle.getY());
 	}
 
 	private void doMotionChangeY(JSONObject currentBlock) throws Exception {
 		double v = resolveValue(findInputInBlock(currentBlock,"DY"));
-		logger.debug("MOVE Y {}",v);
+		if ( verboseParse ) logger.debug("MOVE Y {}",v);
 		myTurtle.moveTo(myTurtle.getX(),myTurtle.getY()+v);
 		
 	}
 
 	private void doMotionSetX(JSONObject currentBlock) throws Exception {
 		double v = resolveValue(findInputInBlock(currentBlock,"X"));
-		logger.debug("SET X {}",v);
+		if ( verboseParse ) logger.debug("SET X {}",v);
 		myTurtle.moveTo(v,myTurtle.getY());
 	}
 
 	private void doMotionSetY(JSONObject currentBlock) throws Exception {
 		double v = resolveValue(findInputInBlock(currentBlock,"Y"));
-		logger.debug("SET Y {}",v);
+		if ( verboseParse ) logger.debug("SET Y {}",v);
 		myTurtle.moveTo(myTurtle.getX(),v);
 	}
 	
@@ -493,13 +542,61 @@ public class LoadScratch3 implements TurtleLoader {
 	private void doSetPenColor(JSONObject currentBlock) throws Exception {
 		ColorRGB c = new ColorRGB((int)resolveValue(findInputInBlock(currentBlock,"COLOR")));		
 		if ( !ignoreDoSetPenColor ){
-			logger.debug("SET COLOR {}",c);
+			if ( verboseParse ) logger.debug("SET COLOR {}",c);
 			myTurtle.setColor(c);
 		}else{
-			logger.debug("SET COLOR {} ignored",c);
+			if ( verboseParse ) logger.debug("SET COLOR {} ignored",c);
 		}
 	}
-	
+	boolean ignoredoChangePenColorParamBy = false;
+	/**
+	 * TODO 
+	 * @param currentBlock
+	 * @throws Exception 
+	 */
+	private void doSetChangeColorBy(JSONObject currentBlock) throws Exception {
+		if ( verboseParse ) logger.debug("pen_changePenColorParamBy COLOR");
+		JSONObject inputs = (JSONObject) currentBlock.get("inputs");
+		JSONArray jColor = (JSONArray) inputs.get("VALUE");
+		double dColor = resolveValue(jColor.get(1));
+		//??COLOR_PARAM = color ?
+		//?? HSB/HSV colors cf https://en.scratch-wiki.info/wiki/Computer_Colors
+		//https://stackoverflow.com/questions/2997656/how-can-i-use-the-hsl-colorspace-in-java
+		
+		Color cOld = new Color(myTurtle.getColor().toInt());
+		float[] RGBtoHSB = cOld.RGBtoHSB(cOld.getRed(), cOld.getGreen(), cOld.getBlue(), null);
+		float hue = RGBtoHSB[0];// 0.9f; //hue
+		float saturation = RGBtoHSB[1];//1.0f; //saturation
+		float brightness = RGBtoHSB[2];//0.8f; //brightness
+
+		//???
+		hue = hue + (float)(360.0/dColor);
+		
+		Color cTmp = Color.getHSBColor(hue, saturation, brightness);
+		if ( !ignoredoChangePenColorParamBy )
+		myTurtle.setColor(new ColorRGB(cTmp));
+		// KO not rgb color .... // myTurtle.setColor(new ColorRGB((int)(myTurtle.getColor().toInt()+((int)dColor))));
+	}
+	private void doSetPenHueToNumber(JSONObject currentBlock) throws Exception {
+		logger.debug("pen_setPenHueToNumber COLOR");
+		JSONObject inputs = (JSONObject) currentBlock.get("inputs");
+		JSONArray jColor = (JSONArray) inputs.get("HUE");
+		double dColor = resolveValue(jColor.get(1));
+		//??COLOR_PARAM = color ?
+		//?? HSB/HSV colors cf https://en.scratch-wiki.info/wiki/Computer_Colors
+		//https://stackoverflow.com/questions/2997656/how-can-i-use-the-hsl-colorspace-in-java
+		
+//		Color cOld = new Color(myTurtle.getColor().toInt());
+//		float[] RGBtoHSB = cOld.RGBtoHSB(cOld.getRed(), cOld.getGreen(), cOld.getBlue(), null);
+		float hue =(float)dColor ; //hue
+		float saturation = 0.84f; //saturation
+		float brightness = 0.5f; //brightness
+
+		Color cTmp = Color.getHSBColor(hue, saturation, brightness);
+		if ( !ignoredoChangePenColorParamBy)
+		myTurtle.setColor(new ColorRGB(cTmp));
+		// KO not rgb color .... // myTurtle.setColor(new ColorRGB((int)(myTurtle.getColor().toInt()+((int)dColor))));
+	}
 	/**
 	 * Find and return currentBlock/fields/subKey/(first element). 
 	 * @param currentBlock the block to search.
@@ -591,7 +688,7 @@ public class LoadScratch3 implements TurtleLoader {
 	 * @throws Exception
 	 */
 	private void readScratchVariables(JSONObject tree) throws Exception {
-		logger.debug("readScratchVariables");
+		if ( verboseParse ) logger.debug("readScratchVariables");
 		scratchGlobalVariables = new Scratch3Variables();
 		JSONArray targets = tree.getJSONArray("targets");
 		Iterator<?> targetIter = targets.iterator();
@@ -607,14 +704,16 @@ public class LoadScratch3 implements TurtleLoader {
 				String name = details.getString(0);
 				Object valueUnknown = details.get(1);
 				Number value;
+				try {
 				if(valueUnknown instanceof String) value = Double.parseDouble((String)valueUnknown); 
 				else value = (Number)valueUnknown;
-				try {
 					double d = value.doubleValue();
-					logger.debug("Variable {} {} {}", k, name, d);
+					if ( verboseParse ) logger.debug("Variable {} {} {}", k, name, d);
 					scratchGlobalVariables.add(new Scratch3Variable(name,k,d));
 				} catch (Exception e) {
-					throw new Exception("Variables must be numbers.", e);
+					// TODO special case a texte varaible value ...
+					scratchGlobalVariables.add(new Scratch3Variable(name,k,valueUnknown));
+					//throw new Exception("Variables must be numbers. "+name+" : \""+valueUnknown+"\"", e);
 				}
 			}
 		}
@@ -626,7 +725,7 @@ public class LoadScratch3 implements TurtleLoader {
 	 * @throws Exception
 	 */
 	private void readScratchLists(JSONObject tree) throws Exception {
-		logger.debug("readScratchLists");
+		if ( verboseParse ) logger.debug("readScratchLists");
 		JSONArray targets = tree.getJSONArray("targets");
 		Iterator<?> targetIter = targets.iterator();
 		while(targetIter.hasNext()) {
@@ -638,10 +737,10 @@ public class LoadScratch3 implements TurtleLoader {
 			Iterator<?> keyIter = keys.iterator();
 			while( keyIter.hasNext() ) {
 				String key = (String)keyIter.next();
-				logger.debug("list key:{}", key);
+				if ( verboseParse ) logger.debug("list key:{}", key);
 				JSONArray elem = listOfLists.getJSONArray(key);
 				String listName = elem.getString(0);
-				logger.debug("  list name:{}", listName);
+				if ( verboseParse ) logger.debug("  list name:{}", listName);
 				Object contents = elem.get(1);
 				Scratch3List list = new Scratch3List(listName);
 				// fill the list with any given contents
@@ -655,12 +754,12 @@ public class LoadScratch3 implements TurtleLoader {
 						if(varValue instanceof Number) {
 							Number num = (Number)varValue;
 							value = (float)num.doubleValue();
-							logger.debug("  list float:{}", value);
+							if ( verboseParse ) logger.debug("  list float:{}", value);
 							list.contents.add(value);
 						} else if(varValue instanceof String) {
 							try {
 								value = Double.parseDouble((String)varValue);
-								logger.debug("  list string:{}", value);
+								if ( verboseParse ) logger.debug("  list string:{}", value);
 								list.contents.add(value);
 							} catch (Exception e) {
 								throw new Exception("List variables must be numbers.", e);
@@ -679,7 +778,7 @@ public class LoadScratch3 implements TurtleLoader {
 	 * @throws Exception
 	 */
 	private void readScratchProcedures() throws Exception {
-		logger.debug("readScratchProcedures");
+		if ( verboseParse ) logger.debug("readScratchProcedures");
 
 		// find the blocks with opcode=procedures_definition.
 		for( String k : blockKeys ) {
@@ -698,7 +797,7 @@ public class LoadScratch3 implements TurtleLoader {
 				Scratch3Procedure p = new Scratch3Procedure(uniqueID,proccode);
 				scratchProcedures.add(p);
 				buildParameterListForProcedure(prototypeBlock,p);
-				logger.debug("procedure found: {}",p.toString());
+				if ( verboseParse ) logger.debug("procedure found: {}",p.toString());
 			}
 		}
 	}
@@ -997,4 +1096,148 @@ public class LoadScratch3 implements TurtleLoader {
 
 		return listIndex;
 	}
+	
+	public static void main(String[] args) {
+		// File srcDir = new File("src" + File.separator + "main" + File.separator + "java");
+		File srcDir = new File("/home/q6/0_mcM_test/scratch3");
+		try {
+
+			PreferencesHelper.start();
+			CommandLineOptions.setFromMain(args);
+			Translator.start();
+
+			Makelangelo.logger = LoggerFactory.getLogger(Makelangelo.class);
+			Makelangelo makelangeloProgram = new Makelangelo();
+			//makelangeloProgram.getCamera().zoomToFit(Paper.DEFAULT_WIDTH, Paper.DEFAULT_HEIGHT);
+			makelangeloProgram.camera.zoomToFit(Paper.DEFAULT_WIDTH, Paper.DEFAULT_HEIGHT);
+			Dimension dim = new Dimension(480, 640);
+
+			//			Camera camera = new Camera();
+//						Paper myPaper = new Paper();
+			//			//logger.debug("Starting robot...");
+			//			Plotter myPlotter = new Plotter();
+			//			
+			//			PlotterRenderer myPlotterRenderer = Machines.MAKELANGELO_5.getPlotterRenderer();
+			//
+			//			JPanel contentPane = new JPanel(new BorderLayout());
+			//			contentPane.setOpaque(true);
+			//			//logger.debug("  create PreviewPanel...");
+			//			PreviewPanel previewPanel = new PreviewPanel();
+			//			previewPanel.setCamera(camera);
+			//			previewPanel.addListener(myPaper);
+			//			previewPanel.addListener(myPlotter);
+			//			TurtleRenderFacade myTurtleRenderer = new TurtleRenderFacade();
+			//			previewPanel.addListener(myTurtleRenderer);
+			//			//		addPlotterRendererToPreviewPanel();
+			//			previewPanel.addListener((gl2)->{
+			//						if(myPlotterRenderer!=null) {
+			//							myPlotterRenderer.render(gl2, myPlotter);
+			//						}
+			//					});
+			//			//		
+			//			//createRangeSlider(contentPane);
+			//
+			//			contentPane.add(previewPanel, BorderLayout.CENTER);
+			//Component cToScreenShoot = contentPane;
+			Component cToScreenShoot = makelangeloProgram.createContentPane();
+			cToScreenShoot.setSize(dim);
+
+			List<File> files = listFiles(srcDir.toPath(), ".sb3");
+			List<File> filesInError = new ArrayList<>();
+
+			// test the files ...
+			files.forEach(file -> {
+				logger.debug("# ? {}", file);
+				try (FileInputStream in = new FileInputStream(file)) {
+					LoadScratch3 lsb3 = new LoadScratch3();
+					try {
+						Turtle t = lsb3.load(in);
+						//load.history.size();
+						logger.debug("# {} {}", t.history.size(), file);
+
+						//						// by popular demand, resize turtle to fit paper
+						//						ResizeTurtleToPaperAction resize = new ResizeTurtleToPaperAction(myPaper, false, "");
+						//						t = resize.run(t);
+						//						myTurtleRenderer.setTurtle(t);
+						makelangeloProgram.setTurtle(new Turtle());// TO EMPTY
+						makelangeloProgram.setTurtle(t);
+						
+						doACapture(cToScreenShoot, file, file.getName() + "_0.png");
+						
+						ResizeTurtleToPaperAction resize = new ResizeTurtleToPaperAction(makelangeloProgram.myPaper,false,"");
+						t = resize.run(t);
+						makelangeloProgram.setTurtle(t);
+
+						doACapture(cToScreenShoot, file, file.getName() + "_1.png");
+					} catch (Exception e) {
+						logger.warn("Can read file {}", file, e);
+						filesInError.add(file);
+					}
+					//searchInAFile(file, results);
+				} catch (FileNotFoundException ex) {
+
+				} catch (IOException ex) {
+
+				}
+
+			});
+
+			logger.debug("Total .sb3 files {}", files.size());
+			logger.debug("Total .sb3 filesInError {}", filesInError.size());
+			
+			// KO ask if ok to quit and exception has i do not have strat as usual the mainFrame is null .
+			//java.lang.NullPointerException: Cannot invoke "javax.swing.JFrame.setDefaultCloseOperation(int)" because "this.mainFrame" is null
+			makelangeloProgram.onClosing();
+		} catch (Exception e) {
+			logger.warn("Can read srcDir {}", srcDir, e);
+		}
+	}
+
+	public static void doACapture(Component cToScreenShoot, File file, String fileDest) throws IOException {
+		cToScreenShoot.addNotify();// Needed in an headless env to doLayout recursively of all sub component
+		cToScreenShoot.doLayout();
+		
+		// previewPanel.repaint();
+		BufferedImage bufferImage = new BufferedImage(cToScreenShoot.getWidth(), cToScreenShoot.getHeight(),
+				BufferedImage.TYPE_INT_ARGB);
+		Graphics2D bufferGraphics = bufferImage.createGraphics();
+		// Clear the buffer:
+		bufferGraphics.clearRect(0, 0, cToScreenShoot.getWidth(), cToScreenShoot.getHeight());
+		//define some rendering option (optional ?)
+		bufferGraphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+		bufferGraphics.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+		// make the JComponent paint on the bufferedGraphics to get a copy of the render.
+		cToScreenShoot.paintAll(bufferGraphics);
+		
+		// save the "image" painted in the bufferImage to a file
+		ImageIO.write(bufferImage, "png", new File(file.getParent(), fileDest));
+	}
+
+	
+    /**
+     * List all files and sub files in this path. Using
+     * <code>Files.walk(path)</code> (so this take care of recursive path
+     * exploration ) And applying filter ( RegularFile and ReadableFile ) and
+     * filtering FileName ...
+     *
+     * @param path where to look.
+     * @param fileNameEndsWithSuffix use ".java" to get only ... ( this is not a
+     * regexp so no '.' despecialization required ) can be set to
+     * <code>""</code> to get all files.
+     * @return a list of files (may be empty if nothing is found) or null if
+     * something is wrong.
+     * @throws IOException
+     */
+    public static List<File> listFiles(Path path, String fileNameEndsWithSuffix) throws IOException {
+        List<File> result;
+        try ( Stream<Path> walk = Files.walk(path)) {
+            result = walk
+                    .filter(Files::isRegularFile)
+                    .filter(Files::isReadable)
+                    .map(Path::toFile)
+                    .filter(f -> f.getName().endsWith(fileNameEndsWithSuffix))
+                    .collect(Collectors.toList());
+        }
+        return result;
+    }
 }
