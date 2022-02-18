@@ -15,6 +15,7 @@ import com.marginallyclever.makelangelo.firmwareUploader.FirmwareUploaderPanel;
 import com.marginallyclever.makelangelo.makeArt.*;
 import com.marginallyclever.makelangelo.makeArt.io.OpenFileChooser;
 import com.marginallyclever.makelangelo.makeArt.io.LoadFilePanel;
+import com.marginallyclever.makelangelo.makeArt.io.vector.LoadScratch3;
 import com.marginallyclever.makelangelo.makeArt.turtleGenerator.TurtleGenerator;
 import com.marginallyclever.makelangelo.makeArt.turtleGenerator.TurtleGeneratorFactory;
 import com.marginallyclever.makelangelo.makeArt.turtleGenerator.TurtleGeneratorPanel;
@@ -58,9 +59,11 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URI;
@@ -69,8 +72,12 @@ import java.security.InvalidParameterException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
+import javax.imageio.ImageIO;
+import net.ifok.image.image4j.codec.ico.ICODecoder;
 
 /**
  * The Makelangelo app is a tool for programming CNC robots, typically plotters.  It converts lines (made of segments made of points)
@@ -189,12 +196,121 @@ public final class Makelangelo {
 		}
 	}
 
+	
 	public void run() {
 		createAppWindow();		
 		//checkSharingPermission();
 
 		Preferences preferences = PreferencesHelper.getPreferenceNode(PreferencesHelper.MakelangeloPreferenceKey.FILE);
 		if (preferences.getBoolean("Check for updates", false)) checkForUpdate(true);
+		
+//		javax.swing.SwingUtilities.invokeLater(() -> {
+//		createUIReportImages();
+//		});
+	}
+
+	public void createUIReportImages() {
+		if (true) {
+			
+
+			ExploreMenuBar.reportJFrameActionMenuBar(mainFrame);
+			final File fileDIrDest = new File("./UIReport-"+VERSION+"-"+DETAILED_VERSION+"-000");
+			fileDIrDest.mkdirs();
+				try {
+				// need to set a size or else exception as its width value is initialy -10 ! ???
+				this.mainMenuBar.setSize(mainFrame.getSize().width, mainMenuBar.getHeight());
+				LoadScratch3.doACapture(this.mainMenuBar, fileDIrDest, "test_capture_menu_0.png", false);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			try {
+				for (int i = 0; i < mainFrame.getJMenuBar().getMenuCount(); i++) {
+					final JMenu menu = mainFrame.getJMenuBar().getMenu(i);
+					final JPopupMenu popupMenu = menu.getPopupMenu();
+					// nop popupMenu.notify();
+
+					popupMenu.doLayout();// ?
+					popupMenu.setVisible(true);// or else the size is 0 x 0 and i cant doACapture on a not > 0x0 ...
+					// nop popupMenu.pack();
+					LoadScratch3.doACapture(popupMenu, fileDIrDest, "test_capture_menu_1_" + i + "_.png", false);
+					popupMenu.setVisible(false);
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			
+			
+			try {
+				LoadScratch3.doACapture(mainFrame, fileDIrDest, "test_capture_mainframe.png", false);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			
+			//
+			//
+				//
+			final Map<String,String> initialValueMap = new TreeMap<>();
+			Arrays.stream(Machines.values())
+					.forEach(iter -> {
+
+						PlotterRenderer pr = iter.getPlotterRenderer();
+						String name = iter.getName();
+						if (myPlotterRenderer == pr) {
+							initialValueMap.put("PlotterRenderer.name", name);
+						}
+					});
+
+			Arrays.stream(Machines.values())
+					.forEach(iter -> {
+						try {
+
+							PlotterRenderer pr = iter.getPlotterRenderer();
+							String name = iter.getName();
+							//JRadioButtonMenuItem button = new JRadioButtonMenuItem(name);
+							//					if (myPlotterRenderer == pr) button.setSelected(true);
+							//					button.addActionListener((e)-> onMachineChange(name));
+							//menu.add(button);
+							//group.add(button);
+							onMachineChange(name);
+							//
+							LoadScratch3.doACapture(mainFrame, fileDIrDest, "test_capture_mainframe_" + name + ".png", false);
+						} catch (Exception e) {
+							e.printStackTrace();
+						}
+
+					});
+			onMachineChange(initialValueMap.get("PlotterRenderer.name"));
+
+			//
+			//
+			//
+			try {
+				PaperSettings settings = new PaperSettings(myPaper);
+				settings.setSize(new Dimension(400,300));
+				LoadScratch3.doACapture(settings, fileDIrDest, "test_capture_PaperSettings.png", true);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			
+			try {
+	//				PlotterSettingsPanel settings = new PlotterSettingsPanel(myPlotter);
+	//				settings.setSize(new Dimension(640,480));
+	//LoadScratch3.doACapture(settings, fileDIrDest, "test_capture_PlotterSettingsPanel.png", true);
+				PlotterSettingsPanel settings = new PlotterSettingsPanel(myPlotter);
+				JDialog dialog = new JDialog(mainFrame, Translator.get("PlotterSettingsPanel.Title"));
+				dialog.add(settings);
+				dialog.setLocationRelativeTo(mainFrame);
+				dialog.setMinimumSize(new Dimension(300, 300));
+				dialog.pack();
+				dialog.setVisible(true);
+
+				LoadScratch3.doACapture(dialog, fileDIrDest, "test_capture_PlotterSettingsPanel.png", false);
+				// nop Thread.sleep(500);
+				dialog.setVisible(false);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
 	}
 
 	private static void setSystemLookAndFeel() {
@@ -861,6 +977,31 @@ public final class Makelangelo {
         labelRangeMax.setText(Integer.toString(top));
 	}
 
+	
+	/**
+	 * Require : in module-info.java "requires transitive image4j;"
+	 * <code>import net.ifok.image.image4j.codec.ico.ICODecoder;</code>
+	 * @param fSub
+	 * @return 
+	 */
+    public static List<BufferedImage> readIconesListFile(File fSub) {
+        try {
+            List<BufferedImage> images = ICODecoder.read(fSub);
+            return images;
+        } catch (IOException e) {
+            System.err.printf("! reading %s : %s\n", fSub.getPath(), e.getMessage());
+        }
+        return null;
+    }
+	public static List<BufferedImage> readIconesListFile(InputStream fSub) {
+        try {
+            List<BufferedImage> images = ICODecoder.read(fSub);
+            return images;
+        } catch (IOException e) {
+            System.err.printf("! reading %s : %s\n","", e.getMessage());
+        }
+        return null;
+    }
 	//  For thread safety this method should be invoked from the event-dispatching thread.
 	private void createAppWindow() {
 		logger.debug("Creating GUI...");
@@ -873,6 +1014,31 @@ public final class Makelangelo {
 				onClosing();
 			}
 		});
+		try{
+			// Allow to set a JFrame IconImage(s) (replace/overide the on defined by the lancher...)
+			
+			// // OK but transparence ... 
+			//mainFrame.setIconImage(ImageIO.read(Makelangelo.class.getResource("/logo.png")));
+			
+			// // KO .ico give nothing ( need to by converted)			
+			//mainFrame.setIconImage(ImageIO.read(Makelangelo.class.getResource("/favicon.ico")));			
+			// // ?OK (not tested as it need a depandancy)  or to have an .ico decodeur like net.sf.image4j.codec.ico.ICODecoder to get a List<BufferedImage> ( a  List as an .ico file can containe multiple image with diffrent size  ... )
+            //
+			final List<BufferedImage> readIconesListFile = readIconesListFile(Makelangelo.class.getResourceAsStream("/favicon.ico"));
+			if ( readIconesListFile != null && !readIconesListFile.isEmpty()){
+				mainFrame.setIconImages(readIconesListFile);
+				mainFrame.setIconImage(readIconesListFile.get(0));
+			}
+			
+			// // OK after under linux with imagemagik a `convert favicon.ico favicon.png` in src/main/resources
+			//mainFrame.setIconImage(ImageIO.read(Makelangelo.class.getResource("/favicon.png")));
+			
+			// // OK logo.png from PR #536 renamed as MainFrameImageIcon.png and added in src/main/resources
+			//
+			//mainFrame.setIconImage(ImageIO.read(Makelangelo.class.getResource("/MainFrameImageIcon.png")));
+		}catch(Exception z){
+			logger.debug("mainFrame setIconImage err : {}",z.getMessage(),z);
+		}
 		
 		buildMenuBar();
 		

@@ -14,6 +14,7 @@ import com.marginallyclever.makelangelo.preview.PreviewPanel;
 import com.marginallyclever.makelangelo.turtle.Turtle;
 import com.marginallyclever.makelangelo.turtle.turtleRenderer.TurtleRenderFacade;
 import com.marginallyclever.util.PreferencesHelper;
+import java.awt.AWTException;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
@@ -694,7 +695,7 @@ public class LoadScratch3 implements TurtleLoader {
 		Iterator<?> targetIter = targets.iterator();
 		while(targetIter.hasNext()) {
 			JSONObject targetN = (JSONObject)targetIter.next();
-			if( (Boolean)targetN.get("isStage") == false ) continue;
+//			if( (Boolean)targetN.get("isStage") == false ) continue;
 			
 			JSONObject variables = targetN.getJSONObject("variables");
 			Iterator<?> keys = variables.keySet().iterator();
@@ -933,6 +934,7 @@ public class LoadScratch3 implements TurtleLoader {
 			case "motion_yposition":				return doMotionYPosition(currentBlock);
 			case "argument_reporter_string_number":	return (double)doReporterStringValue(currentBlock);
 			case "argument_reporter_boolean":		return (double)doReporterStringValue(currentBlock);
+			case "sensing_answer":		return 0.0f;//(double)doReporterStringValue(currentBlock);
 			default: throw new Exception("resolveValue unsupported opcode "+opcode);
 			}
 		}
@@ -1097,6 +1099,10 @@ public class LoadScratch3 implements TurtleLoader {
 		return listIndex;
 	}
 	
+	/**
+	 * PPAC37 test
+	 * @param args 
+	 */
 	public static void main(String[] args) {
 		// File srcDir = new File("src" + File.separator + "main" + File.separator + "java");
 		File srcDir = new File("/home/q6/0_mcM_test/scratch3");
@@ -1162,13 +1168,13 @@ public class LoadScratch3 implements TurtleLoader {
 						makelangeloProgram.setTurtle(new Turtle());// TO EMPTY
 						makelangeloProgram.setTurtle(t);
 						
-						doACapture(cToScreenShoot, file, file.getName() + "_0.png");
+						doACapture(cToScreenShoot, file.getParentFile(), file.getName() + "_0.png", true);
 						
 						ResizeTurtleToPaperAction resize = new ResizeTurtleToPaperAction(makelangeloProgram.myPaper,false,"");
 						t = resize.run(t);
 						makelangeloProgram.setTurtle(t);
 
-						doACapture(cToScreenShoot, file, file.getName() + "_1.png");
+						doACapture(cToScreenShoot, file.getParentFile(), file.getName() + "_1.png", true);
 					} catch (Exception e) {
 						logger.warn("Can read file {}", file, e);
 						filesInError.add(file);
@@ -1193,11 +1199,20 @@ public class LoadScratch3 implements TurtleLoader {
 		}
 	}
 
-	public static void doACapture(Component cToScreenShoot, File file, String fileDest) throws IOException {
-		cToScreenShoot.addNotify();// Needed in an headless env to doLayout recursively of all sub component
-		cToScreenShoot.doLayout();
+	/**
+	 *
+	 * @param cToScreenShoot the value of cToScreenShoot
+	 * @param fileTested the value of fileTested
+	 * @param fileDest the value of fileDest
+	 * @param inHeadlessMode the value of inHeadlessMode to ste to true to force a addNotify and a doLayout to see the sub JComponent in headless mode (not added to an visible JFrame/JComponent)
+	 * @throws IOException
+	 */
+	public static void doACapture(Component cToScreenShoot, File fileTested, String fileDest, boolean inHeadlessMode) throws IOException {
+		if ( inHeadlessMode ){
+			cToScreenShoot.addNotify();// Needed in an headless env to doLayout recursively of all sub component
+			cToScreenShoot.doLayout();
+		}
 		
-		// previewPanel.repaint();
 		BufferedImage bufferImage = new BufferedImage(cToScreenShoot.getWidth(), cToScreenShoot.getHeight(),
 				BufferedImage.TYPE_INT_ARGB);
 		Graphics2D bufferGraphics = bufferImage.createGraphics();
@@ -1208,11 +1223,82 @@ public class LoadScratch3 implements TurtleLoader {
 		bufferGraphics.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
 		// make the JComponent paint on the bufferedGraphics to get a copy of the render.
 		cToScreenShoot.paintAll(bufferGraphics);
-		
+		final File fileOutputDest = new File(fileTested, fileDest);
+		System.out.println("writing "+fileOutputDest.toString());
 		// save the "image" painted in the bufferImage to a file
-		ImageIO.write(bufferImage, "png", new File(file.getParent(), fileDest));
+		ImageIO.write(bufferImage, "png", fileOutputDest);
+		
+		//		    to save a resize image to
+		if (false) {
+			int dimW = cToScreenShoot.getWidth() / 2;
+			int dimH = cToScreenShoot.getHeight() / 2;
+			Image scaledInstance = bufferImage.getScaledInstance(dimW, dimH, Image.SCALE_DEFAULT);
+			ImageIO.write(convertToBufferedImage(scaledInstance), "png", new File("cframeImage_vignette.png"));
+		}
+		
+		if ( cToScreenShoot.isVisible() && !inHeadlessMode){
+		javax.swing.SwingUtilities.invokeLater(() -> {
+try{
+//				cToScreenShoot.notify();
+				cToScreenShoot.doLayout();
+//				cToScreenShoot.repaint();
+				final File fileOutputDestRobot = new File(fileTested, "robot_"+fileDest);
+		System.out.println("writing "+fileOutputDest.toString());
+		
+							Robot robot = new Robot();
+							// ko in this context robot.waitForIdle();//delay(500);
+							//cToScreenShoot.getBounds() // KO ...
+							Rectangle r = new Rectangle(cToScreenShoot.getLocation(), cToScreenShoot.getSize());
+							BufferedImage screenShot = robot.createScreenCapture(r);
+							ImageIO.write(screenShot, "png", fileOutputDestRobot);
+		
+					} catch (AWTException ex) {
+						logger.error("{}",ex.getMessage(),ex);
+					} catch (IOException ex) {
+						logger.error("{}",ex.getMessage(),ex);
+					}
+	});
+		}
+			
 	}
 
+	/*
+	
+				if (doFullJFrame) javax.swing.SwingUtilities.invokeLater(() -> {
+
+					try {
+						if (doFullJFrame) {
+							//https://stackoverflow.com/questions/58305/is-there-a-way-to-take-a-screenshot-using-java-and-save-it-to-some-sort-of-image
+							//	18
+							//If you'd like to capture all monitors, you can use the following code:
+							GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+							GraphicsDevice[] screens = ge.getScreenDevices();
+
+							Rectangle allScreenBounds = new Rectangle();
+							for (GraphicsDevice screen : screens) {
+								Rectangle screenBounds = screen.getDefaultConfiguration().getBounds();
+
+								allScreenBounds.width += screenBounds.width;
+								allScreenBounds.height = Math.max(allScreenBounds.height, screenBounds.height);
+							}
+
+							//Rectangle 					rFrame = null;
+							if (rFramef != null) {
+								allScreenBounds = rFramef;
+							}
+							Robot robot = new Robot();
+							//
+							BufferedImage screenShot = robot.createScreenCapture(allScreenBounds);
+							ImageIO.write(screenShot, "png", new File(dirScreenShotDest,"screenshot_robot.png"));
+						}
+					} catch (AWTException ex) {
+						logger.error("{}",ex.getMessage(),ex);
+					} catch (IOException ex) {
+						logger.error("{}",ex.getMessage(),ex);
+					}
+
+				});
+	*/
 	
     /**
      * List all files and sub files in this path. Using
@@ -1240,4 +1326,53 @@ public class LoadScratch3 implements TurtleLoader {
         }
         return result;
     }
+	
+	
+	/**
+	 * Convert Image to BufferedImage. Source :
+	 * https://mkyong.com/java/how-to-write-an-image-to-file-imageio/
+	 *
+	 * @param img
+	 * @return
+	 */
+	public static BufferedImage convertToBufferedImage(Image img) {
+
+		if (img instanceof BufferedImage) {
+			return (BufferedImage) img;
+		}
+
+		// Create a buffered image with transparency
+		BufferedImage bi = new BufferedImage(
+				img.getWidth(null), img.getHeight(null),
+				BufferedImage.TYPE_INT_ARGB);
+
+		Graphics2D graphics2D = bi.createGraphics();
+		graphics2D.drawImage(img, 0, 0, null);
+		graphics2D.dispose();
+
+		return bi;
+	}
+
+	/**
+	 * list out all the image file supported formats. Source :
+	 * https://mkyong.com/java/how-to-write-an-image-to-file-imageio/
+	 */
+	private static void listImageTypeSupported() {
+		String writerNames[] = ImageIO.getWriterFormatNames();
+		Arrays.stream(writerNames).sorted().forEach(System.out::println);
+	}
+
+	private static String listImageTypeSupportedAsSimpleLowerCaseString() {
+		String writerNames[] = ImageIO.getWriterFormatNames();
+		
+		SortedSet<String> sset = new TreeSet<>();		
+		Arrays.stream(writerNames).forEach(wn -> sset.add(wn.toLowerCase()));
+		
+		StringBuilder sb = new StringBuilder();
+		sset.forEach(s -> {sb.append(s);sb.append("/");});
+		if ( sb.length()>0 ) {sb.setLength(sb.length()-1);}
+		
+		return sb.toString();
+	}
+	
 }

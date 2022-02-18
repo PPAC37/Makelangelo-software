@@ -23,6 +23,6 @@ module com.marginallyclever.makelangelo {
 	exports com.marginallyclever.makelangelo.paper;
 	exports com.marginallyclever.convenience;
 	exports com.marginallyclever.convenience.log;
-
+requires transitive image4j;
 	opens com.marginallyclever.makelangelo.plotter.settings;
 }
