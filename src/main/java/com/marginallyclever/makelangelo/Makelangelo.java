@@ -15,7 +15,6 @@ import com.marginallyclever.makelangelo.firmwareUploader.FirmwareUploaderPanel;
 import com.marginallyclever.makelangelo.makeArt.*;
 import com.marginallyclever.makelangelo.makeArt.io.OpenFileChooser;
 import com.marginallyclever.makelangelo.makeArt.io.LoadFilePanel;
-import com.marginallyclever.makelangelo.makeArt.io.vector.LoadScratch3;
 import com.marginallyclever.makelangelo.makeArt.turtleGenerator.TurtleGenerator;
 import com.marginallyclever.makelangelo.makeArt.turtleGenerator.TurtleGeneratorFactory;
 import com.marginallyclever.makelangelo.makeArt.turtleGenerator.TurtleGeneratorPanel;
@@ -40,6 +39,7 @@ import com.marginallyclever.makelangelo.turtle.Turtle;
 import com.marginallyclever.makelangelo.turtle.turtleRenderer.TurtleRenderFacade;
 import com.marginallyclever.makelangelo.turtle.turtleRenderer.TurtleRenderFactory;
 import com.marginallyclever.makelangelo.turtle.turtleRenderer.TurtleRenderer;
+import com.marginallyclever.util.ImageCaptureJComponant;
 import com.marginallyclever.util.PreferencesHelper;
 import com.marginallyclever.util.PropertiesFileHelper;
 import org.slf4j.Logger;
@@ -76,7 +76,6 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
-import javax.imageio.ImageIO;
 import net.ifok.image.image4j.codec.ico.ICODecoder;
 
 /**
@@ -219,7 +218,7 @@ public final class Makelangelo {
 				try {
 				// need to set a size or else exception as its width value is initialy -10 ! ???
 				this.mainMenuBar.setSize(mainFrame.getSize().width, mainMenuBar.getHeight());
-				LoadScratch3.doACapture(this.mainMenuBar, fileDIrDest, "test_capture_menu_0.png", false);
+				ImageCaptureJComponant.doACapture(this.mainMenuBar, fileDIrDest, "test_capture_menu_0.png", false);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -232,7 +231,7 @@ public final class Makelangelo {
 					popupMenu.doLayout();// ?
 					popupMenu.setVisible(true);// or else the size is 0 x 0 and i cant doACapture on a not > 0x0 ...
 					// nop popupMenu.pack();
-					LoadScratch3.doACapture(popupMenu, fileDIrDest, "test_capture_menu_1_" + i + "_.png", false);
+					ImageCaptureJComponant.doACapture(popupMenu, fileDIrDest, "test_capture_menu_1_" + i + "_.png", false);
 					popupMenu.setVisible(false);
 				}
 			} catch (Exception e) {
@@ -241,7 +240,7 @@ public final class Makelangelo {
 			
 			
 			try {
-				LoadScratch3.doACapture(mainFrame, fileDIrDest, "test_capture_mainframe.png", false);
+				ImageCaptureJComponant.doACapture(mainFrame, fileDIrDest, "test_capture_mainframe.png", false);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -273,7 +272,7 @@ public final class Makelangelo {
 							//group.add(button);
 							onMachineChange(name);
 							//
-							LoadScratch3.doACapture(mainFrame, fileDIrDest, "test_capture_mainframe_" + name + ".png", false);
+							ImageCaptureJComponant.doACapture(mainFrame, fileDIrDest, "test_capture_mainframe_" + name + ".png", false);
 						} catch (Exception e) {
 							e.printStackTrace();
 						}
@@ -287,7 +286,7 @@ public final class Makelangelo {
 			try {
 				PaperSettings settings = new PaperSettings(myPaper);
 				settings.setSize(new Dimension(400,300));
-				LoadScratch3.doACapture(settings, fileDIrDest, "test_capture_PaperSettings.png", true);
+				ImageCaptureJComponant.doACapture(settings, fileDIrDest, "test_capture_PaperSettings.png", true);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
@@ -304,7 +303,7 @@ public final class Makelangelo {
 				dialog.pack();
 				dialog.setVisible(true);
 
-				LoadScratch3.doACapture(dialog, fileDIrDest, "test_capture_PlotterSettingsPanel.png", false);
+				ImageCaptureJComponant.doACapture(dialog, fileDIrDest, "test_capture_PlotterSettingsPanel.png", false);
 				// nop Thread.sleep(500);
 				dialog.setVisible(false);
 			} catch (Exception e) {

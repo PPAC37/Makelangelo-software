@@ -13,6 +13,7 @@ import com.marginallyclever.makelangelo.preview.Camera;
 import com.marginallyclever.makelangelo.preview.PreviewPanel;
 import com.marginallyclever.makelangelo.turtle.Turtle;
 import com.marginallyclever.makelangelo.turtle.turtleRenderer.TurtleRenderFacade;
+import com.marginallyclever.util.ImageCaptureJComponant;
 import com.marginallyclever.util.PreferencesHelper;
 import java.awt.AWTException;
 import java.awt.BorderLayout;
@@ -1105,7 +1106,11 @@ public class LoadScratch3 implements TurtleLoader {
 	 */
 	public static void main(String[] args) {
 		// File srcDir = new File("src" + File.separator + "main" + File.separator + "java");
-		File srcDir = new File("/home/q6/0_mcM_test/scratch3");
+		// File srcDir = new File("src" + File.separator + "test" + File.separator + "resources");// ? TODO 
+		File srcDir = new File("/home/q6/0_mcM_test/scratch3"); // TODO an array to use multiple directory file set to test.
+		
+		//
+		
 		try {
 
 			PreferencesHelper.start();
@@ -1118,6 +1123,7 @@ public class LoadScratch3 implements TurtleLoader {
 			makelangeloProgram.camera.zoomToFit(Paper.DEFAULT_WIDTH, Paper.DEFAULT_HEIGHT);
 			Dimension dim = new Dimension(480, 640);
 
+			// // A try to do a minimal env instanciation like done in Makelangelo.jave to avoid hacking it. But i miss somethige ... only get black image capture.
 			//			Camera camera = new Camera();
 //						Paper myPaper = new Paper();
 			//			//logger.debug("Starting robot...");
@@ -1145,20 +1151,23 @@ public class LoadScratch3 implements TurtleLoader {
 			//
 			//			contentPane.add(previewPanel, BorderLayout.CENTER);
 			//Component cToScreenShoot = contentPane;
+			
 			Component cToScreenShoot = makelangeloProgram.createContentPane();
+			
 			cToScreenShoot.setSize(dim);
+			
+			final String fileExtention = ".sb3";
 
-			List<File> files = listFiles(srcDir.toPath(), ".sb3");
+			List<File> filesToTest = ImageCaptureJComponant.listFiles(srcDir.toPath(), fileExtention);
 			List<File> filesInError = new ArrayList<>();
 
 			// test the files ...
-			files.forEach(file -> {
+			filesToTest.forEach(file -> {
 				logger.debug("# ? {}", file);
 				try (FileInputStream in = new FileInputStream(file)) {
 					LoadScratch3 lsb3 = new LoadScratch3();
 					try {
 						Turtle t = lsb3.load(in);
-						//load.history.size();
 						logger.debug("# {} {}", t.history.size(), file);
 
 						//						// by popular demand, resize turtle to fit paper
@@ -1168,211 +1177,39 @@ public class LoadScratch3 implements TurtleLoader {
 						makelangeloProgram.setTurtle(new Turtle());// TO EMPTY
 						makelangeloProgram.setTurtle(t);
 						
-						doACapture(cToScreenShoot, file.getParentFile(), file.getName() + "_0.png", true);
+						ImageCaptureJComponant.doACapture(cToScreenShoot, file.getParentFile(), file.getName() + "_0.png", true);
 						
 						ResizeTurtleToPaperAction resize = new ResizeTurtleToPaperAction(makelangeloProgram.myPaper,false,"");
 						t = resize.run(t);
 						makelangeloProgram.setTurtle(t);
 
-						doACapture(cToScreenShoot, file.getParentFile(), file.getName() + "_1.png", true);
+						ImageCaptureJComponant.doACapture(cToScreenShoot, file.getParentFile(), file.getName() + "_1.png", true);
 					} catch (Exception e) {
-						logger.warn("Can read file {}", file, e);
+						logger.warn("Exception file {}", file, e);
 						filesInError.add(file);
+						// TODO a bummy image with the exception in red ...
+						
 					}
-					//searchInAFile(file, results);
+					
 				} catch (FileNotFoundException ex) {
-
+					logger.warn("FileNotFoundException file {}", file, ex);
 				} catch (IOException ex) {
-
+					logger.warn("IOException file {}", file, ex);
 				}
 
 			});
 
-			logger.debug("Total .sb3 files {}", files.size());
-			logger.debug("Total .sb3 filesInError {}", filesInError.size());
+			// a summary
+			logger.debug("Total {} files {}", fileExtention, filesToTest.size());
+			logger.debug("Total {} files In Error {}", fileExtention, filesInError.size());
 			
 			// KO ask if ok to quit and exception has i do not have strat as usual the mainFrame is null .
 			//java.lang.NullPointerException: Cannot invoke "javax.swing.JFrame.setDefaultCloseOperation(int)" because "this.mainFrame" is null
 			makelangeloProgram.onClosing();
 		} catch (Exception e) {
-			logger.warn("Can read srcDir {}", srcDir, e);
+			logger.warn("Exception srcDir {}", srcDir, e);
 		}
 	}
 
-	/**
-	 *
-	 * @param cToScreenShoot the value of cToScreenShoot
-	 * @param fileTested the value of fileTested
-	 * @param fileDest the value of fileDest
-	 * @param inHeadlessMode the value of inHeadlessMode to ste to true to force a addNotify and a doLayout to see the sub JComponent in headless mode (not added to an visible JFrame/JComponent)
-	 * @throws IOException
-	 */
-	public static void doACapture(Component cToScreenShoot, File fileTested, String fileDest, boolean inHeadlessMode) throws IOException {
-		if ( inHeadlessMode ){
-			cToScreenShoot.addNotify();// Needed in an headless env to doLayout recursively of all sub component
-			cToScreenShoot.doLayout();
-		}
-		
-		BufferedImage bufferImage = new BufferedImage(cToScreenShoot.getWidth(), cToScreenShoot.getHeight(),
-				BufferedImage.TYPE_INT_ARGB);
-		Graphics2D bufferGraphics = bufferImage.createGraphics();
-		// Clear the buffer:
-		bufferGraphics.clearRect(0, 0, cToScreenShoot.getWidth(), cToScreenShoot.getHeight());
-		//define some rendering option (optional ?)
-		bufferGraphics.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-		bufferGraphics.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-		// make the JComponent paint on the bufferedGraphics to get a copy of the render.
-		cToScreenShoot.paintAll(bufferGraphics);
-		final File fileOutputDest = new File(fileTested, fileDest);
-		System.out.println("writing "+fileOutputDest.toString());
-		// save the "image" painted in the bufferImage to a file
-		ImageIO.write(bufferImage, "png", fileOutputDest);
-		
-		//		    to save a resize image to
-		if (false) {
-			int dimW = cToScreenShoot.getWidth() / 2;
-			int dimH = cToScreenShoot.getHeight() / 2;
-			Image scaledInstance = bufferImage.getScaledInstance(dimW, dimH, Image.SCALE_DEFAULT);
-			ImageIO.write(convertToBufferedImage(scaledInstance), "png", new File("cframeImage_vignette.png"));
-		}
-		
-		if ( cToScreenShoot.isVisible() && !inHeadlessMode){
-		javax.swing.SwingUtilities.invokeLater(() -> {
-try{
-//				cToScreenShoot.notify();
-				cToScreenShoot.doLayout();
-//				cToScreenShoot.repaint();
-				final File fileOutputDestRobot = new File(fileTested, "robot_"+fileDest);
-		System.out.println("writing "+fileOutputDest.toString());
-		
-							Robot robot = new Robot();
-							// ko in this context robot.waitForIdle();//delay(500);
-							//cToScreenShoot.getBounds() // KO ...
-							Rectangle r = new Rectangle(cToScreenShoot.getLocation(), cToScreenShoot.getSize());
-							BufferedImage screenShot = robot.createScreenCapture(r);
-							ImageIO.write(screenShot, "png", fileOutputDestRobot);
-		
-					} catch (AWTException ex) {
-						logger.error("{}",ex.getMessage(),ex);
-					} catch (IOException ex) {
-						logger.error("{}",ex.getMessage(),ex);
-					}
-	});
-		}
-			
-	}
-
-	/*
-	
-				if (doFullJFrame) javax.swing.SwingUtilities.invokeLater(() -> {
-
-					try {
-						if (doFullJFrame) {
-							//https://stackoverflow.com/questions/58305/is-there-a-way-to-take-a-screenshot-using-java-and-save-it-to-some-sort-of-image
-							//	18
-							//If you'd like to capture all monitors, you can use the following code:
-							GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
-							GraphicsDevice[] screens = ge.getScreenDevices();
-
-							Rectangle allScreenBounds = new Rectangle();
-							for (GraphicsDevice screen : screens) {
-								Rectangle screenBounds = screen.getDefaultConfiguration().getBounds();
-
-								allScreenBounds.width += screenBounds.width;
-								allScreenBounds.height = Math.max(allScreenBounds.height, screenBounds.height);
-							}
-
-							//Rectangle 					rFrame = null;
-							if (rFramef != null) {
-								allScreenBounds = rFramef;
-							}
-							Robot robot = new Robot();
-							//
-							BufferedImage screenShot = robot.createScreenCapture(allScreenBounds);
-							ImageIO.write(screenShot, "png", new File(dirScreenShotDest,"screenshot_robot.png"));
-						}
-					} catch (AWTException ex) {
-						logger.error("{}",ex.getMessage(),ex);
-					} catch (IOException ex) {
-						logger.error("{}",ex.getMessage(),ex);
-					}
-
-				});
-	*/
-	
-    /**
-     * List all files and sub files in this path. Using
-     * <code>Files.walk(path)</code> (so this take care of recursive path
-     * exploration ) And applying filter ( RegularFile and ReadableFile ) and
-     * filtering FileName ...
-     *
-     * @param path where to look.
-     * @param fileNameEndsWithSuffix use ".java" to get only ... ( this is not a
-     * regexp so no '.' despecialization required ) can be set to
-     * <code>""</code> to get all files.
-     * @return a list of files (may be empty if nothing is found) or null if
-     * something is wrong.
-     * @throws IOException
-     */
-    public static List<File> listFiles(Path path, String fileNameEndsWithSuffix) throws IOException {
-        List<File> result;
-        try ( Stream<Path> walk = Files.walk(path)) {
-            result = walk
-                    .filter(Files::isRegularFile)
-                    .filter(Files::isReadable)
-                    .map(Path::toFile)
-                    .filter(f -> f.getName().endsWith(fileNameEndsWithSuffix))
-                    .collect(Collectors.toList());
-        }
-        return result;
-    }
-	
-	
-	/**
-	 * Convert Image to BufferedImage. Source :
-	 * https://mkyong.com/java/how-to-write-an-image-to-file-imageio/
-	 *
-	 * @param img
-	 * @return
-	 */
-	public static BufferedImage convertToBufferedImage(Image img) {
-
-		if (img instanceof BufferedImage) {
-			return (BufferedImage) img;
-		}
-
-		// Create a buffered image with transparency
-		BufferedImage bi = new BufferedImage(
-				img.getWidth(null), img.getHeight(null),
-				BufferedImage.TYPE_INT_ARGB);
-
-		Graphics2D graphics2D = bi.createGraphics();
-		graphics2D.drawImage(img, 0, 0, null);
-		graphics2D.dispose();
-
-		return bi;
-	}
-
-	/**
-	 * list out all the image file supported formats. Source :
-	 * https://mkyong.com/java/how-to-write-an-image-to-file-imageio/
-	 */
-	private static void listImageTypeSupported() {
-		String writerNames[] = ImageIO.getWriterFormatNames();
-		Arrays.stream(writerNames).sorted().forEach(System.out::println);
-	}
-
-	private static String listImageTypeSupportedAsSimpleLowerCaseString() {
-		String writerNames[] = ImageIO.getWriterFormatNames();
-		
-		SortedSet<String> sset = new TreeSet<>();		
-		Arrays.stream(writerNames).forEach(wn -> sset.add(wn.toLowerCase()));
-		
-		StringBuilder sb = new StringBuilder();
-		sset.forEach(s -> {sb.append(s);sb.append("/");});
-		if ( sb.length()>0 ) {sb.setLength(sb.length()-1);}
-		
-		return sb.toString();
-	}
 	
 }
