@@ -594,12 +594,7 @@ public class LoadScratch3 implements TurtleLoader {
 	private void doMotionPointInDirection(JSONObject currentBlock) throws Exception {
 		double v = resolveValue(findInputInBlock(currentBlock,"DIRECTION"));
 		if ( verboseParse ) logger.debug("POINT AT {}",v);
-//			double radians=Math.toRadians(angle);
-//		nx = Math.cos(radians);
-//		ny = Math.sin(radians);
-//		//myTurtle.setAngle(v-90.0);// 0° orientation in turtle = 90° orientation in scratch.
-//		//cos(toRadians(90.0))
-		myTurtle.setAngle(Math.toDegrees(Math.cos(Math.toRadians(v-90))));
+		myTurtle.setAngle(90.0-v);
 	}
 	
 	private void doMotionTurnLeft(JSONObject currentBlock) throws Exception {
