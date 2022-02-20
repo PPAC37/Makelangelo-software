@@ -6,17 +6,9 @@ import com.marginallyclever.makelangelo.Makelangelo;
 import com.marginallyclever.makelangelo.Translator;
 import com.marginallyclever.makelangelo.makeArt.ResizeTurtleToPaperAction;
 import com.marginallyclever.makelangelo.paper.Paper;
-import com.marginallyclever.makelangelo.plotter.Plotter;
-import com.marginallyclever.makelangelo.plotter.plotterRenderer.Machines;
-import com.marginallyclever.makelangelo.plotter.plotterRenderer.PlotterRenderer;
-import com.marginallyclever.makelangelo.preview.Camera;
-import com.marginallyclever.makelangelo.preview.PreviewPanel;
 import com.marginallyclever.makelangelo.turtle.Turtle;
-import com.marginallyclever.makelangelo.turtle.turtleRenderer.TurtleRenderFacade;
 import com.marginallyclever.util.ImageCaptureJComponant;
 import com.marginallyclever.util.PreferencesHelper;
-import java.awt.AWTException;
-import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -27,43 +19,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.filechooser.FileNameExtensionFilter;
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.*;
-import java.util.logging.Level;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
-import javax.swing.JPanel;
-
-import java.awt.Graphics;
-import java.awt.Graphics2D;
-import java.awt.GraphicsDevice;
-import java.awt.GraphicsEnvironment;
-import java.awt.Image;
-import java.awt.Rectangle;
-import java.awt.RenderingHints;
-import java.awt.Robot;
-import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.net.URL;
-import java.util.Arrays;
-import java.util.SortedSet;
-import java.util.TreeSet;
-import java.util.logging.Level;
-import java.util.prefs.Preferences;
-import javax.imageio.ImageIO;
-import javax.swing.JButton;
-import javax.swing.JFrame;
-import javax.swing.JPanel;
 /**
  * {@link LoadScratch3} loads a limited set of Scratch 3.0 commands into memory. 
  * We ignore monitors, which are visual displays of variables, booleans, and lists
@@ -242,6 +206,8 @@ public class LoadScratch3 implements TurtleLoader {
 	private void readScratchInstructions() throws Exception {
 		if ( verboseParse ) logger.debug("readScratchInstructions ( and do a flagclicked {} times ) ",nbClicOnTheGreenFlag);
 		myTurtle = new Turtle();// needed to be init here in case multiple "event_whenflagclicked"
+		// color (Scratch hue = 66 ? [0..100] , Scratch Saturation = 100 [0..100] , Scratch Liminosité/Brightness = 100 [ 0..100 ]
+		myTurtle.setColor(new ColorRGB(Color.getHSBColor(0.66f, 1.0f, 1.0f)));// initial color (a blue like) at first Scratch run.
 		int nbGreenFlagParsed_Total = 0;
 		for (int i = 0; i < nbClicOnTheGreenFlag; i++) {
 			// find the first block with opcode=event_whenflagclicked.
@@ -339,8 +305,142 @@ public class LoadScratch3 implements TurtleLoader {
 			case "pen_penDown":				myTurtle.penDown();						break;
 			case "pen_penUp":				myTurtle.penUp();						break;
 			case "pen_setPenColorToColor":	doSetPenColor(currentBlock);			break;
-			case "pen_changePenColorParamBy":	doSetChangeColorBy(currentBlock);break;
-			case "pen_setPenHueToNumber":	doSetPenHueToNumber(currentBlock);break;
+			case "pen_changePenColorParamBy":	
+				/*
+				  "2)`yA8Y*+]#b6e8_1lvt": {
+                    "opcode": "pen_changePenColorParamBy",
+                    "next": "CV)V**VG/vN=yKh=E1~g",
+                    "parent": "/gpLP26|gs*!Ct{q%.hd",
+                    "inputs": {
+                        "VALUE": [1, [4, "-10"]],
+                        "COLOR_PARAM": [1, "KqL.$BTJ:9Wrr]#Pf1iO"]
+                    },
+                    "fields": {},
+                    "shadow": false,
+                    "topLevel": false
+                },
+                "KqL.$BTJ:9Wrr]#Pf1iO": {
+                    "opcode": "pen_menu_colorParam",
+                    "next": null,
+                    "parent": "2)`yA8Y*+]#b6e8_1lvt",
+                    "inputs": {},
+                    "fields": {
+                        "colorParam": ["saturation", null]
+                    },
+                    "shadow": true,
+                    "topLevel": false
+                },
+				*/
+				doSetChangeColorBy(currentBlock);
+				break;
+			case "pen_setPenHueToNumber":
+				doSetPenHueToNumber(currentBlock);
+				break;
+			
+			case "pen_setPenSizeTo":
+			/*
+			 ";i{gg^|s)=e=Fy9McMlO": {
+                    "opcode": "pen_setPenSizeTo",
+                    "next": "e)~nV4Bjj+sF)EB@[HO,",
+                    "parent": "z,e{#miua,RereLh0ku!",
+                    "inputs": {
+                        "SIZE": [1, [4, "5"]]
+                    },
+                    "fields": {},
+                    "shadow": false,
+                    "topLevel": false
+                },
+			
+			*/
+				break;
+			case "pen_clear":
+			/*
+			  "z,e{#miua,RereLh0ku!": {
+                    "opcode": "pen_clear",
+                    "next": ";i{gg^|s)=e=Fy9McMlO",
+                    "parent": "lo_P=-r|In.F`*_1ZYA/",
+                    "inputs": {},
+                    "fields": {},
+                    "shadow": false,
+                    "topLevel": false
+                },
+			*/
+				myTurtle.history.clear();
+				break;
+			/*															
+			pen_stamp																
+			
+			case "":																
+*/																
+																			
+			case "looks_show":	
+			case "looks_hide":
+				break;
+			case "looks_nextcostume":
+			case "looks_changesizeby":
+				break;
+			
+			case "looks_setsizeto":
+			/*
+                "a^zlW%_tOe$)j]_J1frb": {
+                    "opcode": "looks_setsizeto",
+                    "next": "+GMIF|VE2SW_?q8lXz?#",
+                    "parent": "ke3+lO+?/ZTh(?ek4N?_",
+                    "inputs": {
+                        "SIZE": [1, [4, "10"]]
+                    },
+                    "fields": {},
+                    "shadow": false,
+                    "topLevel": false
+                },			
+			*/
+				break;
+			case "motion_glidesecstoxy":// TODO tempo / ordo
+				doMotionGotoXY(currentBlock);
+				break;
+			case "control_wait":// TODO tempo / ordo
+			/*
+                "+GMIF|VE2SW_?q8lXz?#": {
+                    "opcode": "control_wait",
+                    "next": "UeWKL*y]Oqy7Ms~]p]j}",
+                    "parent": "a^zlW%_tOe$)j]_J1frb",
+                    "inputs": {
+                        "DURATION": [1, [5, "1"]]
+                    },
+                    "fields": {},
+                    "shadow": false,
+                    "topLevel": false
+                },			
+			*/																
+				break;
+			case "pen_setPenColorParamTo":
+			/*
+                "]Q8%xE?p~LIJwL*v+OIZ": {
+                    "opcode": "pen_setPenColorParamTo",
+                    "next": "V+A#_}P`i}0T55q`dR--",
+                    "parent": "/gpLP26|gs*!Ct{q%.hd",
+                    "inputs": {
+                        "COLOR_PARAM": [1, "~$,8{+%3c=os`ZE4UWd*"],
+                        "VALUE": [1, [4, "100"]]
+                    },
+                    "fields": {},
+                    "shadow": false,
+                    "topLevel": false
+                },
+                "~$,8{+%3c=os`ZE4UWd*": {
+                    "opcode": "pen_menu_colorParam",
+                    "next": null,
+                    "parent": "]Q8%xE?p~LIJwL*v+OIZ",
+                    "inputs": {},
+                    "fields": {
+                        "colorParam": ["saturation", null]
+                    },
+                    "shadow": true,
+                    "topLevel": false
+                },
+			*/
+				doSetChangeColorTo(currentBlock);
+				break;
 			//
 			default: logger.debug("Ignored {}", opcode);
 			}
@@ -494,7 +594,12 @@ public class LoadScratch3 implements TurtleLoader {
 	private void doMotionPointInDirection(JSONObject currentBlock) throws Exception {
 		double v = resolveValue(findInputInBlock(currentBlock,"DIRECTION"));
 		if ( verboseParse ) logger.debug("POINT AT {}",v);
-		myTurtle.setAngle(v-90.0);// 0° orientation in turtle = 90° orientation in scratch.
+//			double radians=Math.toRadians(angle);
+//		nx = Math.cos(radians);
+//		ny = Math.sin(radians);
+//		//myTurtle.setAngle(v-90.0);// 0° orientation in turtle = 90° orientation in scratch.
+//		//cos(toRadians(90.0))
+		myTurtle.setAngle(Math.toDegrees(Math.cos(Math.toRadians(v-90))));
 	}
 	
 	private void doMotionTurnLeft(JSONObject currentBlock) throws Exception {
@@ -552,52 +657,187 @@ public class LoadScratch3 implements TurtleLoader {
 	}
 	boolean ignoredoChangePenColorParamBy = false;
 	/**
-	 * TODO 
+	 * pen_changePenColorParamBy.
+	 * 
+	 * HSB (Hue, Saturation, Brightnes) colors cf https://en.scratch-wiki.info/wiki/Computer_Colors
+	 * COLOR_PARAM = color
+	 * TODO saturation , brightnes
+	 * In Scratch when you select a color you have 3 parameters
+	 * COLOR from 0 to 100
+	 * TODO Saturation? from 0 to 100
+	 * TODO Brightnes from 0 to 100
+	 * 
+	 * Initial Scract3 Color seem to be C=66, S=100, B=100 ??? in RGB
+	 * 
+	 * https://stackoverflow.com/questions/2997656/how-can-i-use-the-hsl-colorspace-in-java
+	 *  
+	 * 
 	 * @param currentBlock
 	 * @throws Exception 
 	 */
 	private void doSetChangeColorBy(JSONObject currentBlock) throws Exception {
-		if ( verboseParse ) logger.debug("pen_changePenColorParamBy COLOR");
+		logger.trace("pen_changePenColorParamBy COLOR");
 		JSONObject inputs = (JSONObject) currentBlock.get("inputs");
 		JSONArray jColor = (JSONArray) inputs.get("VALUE");
 		double dColor = resolveValue(jColor.get(1));
-		//??COLOR_PARAM = color ?
-		//?? HSB/HSV colors cf https://en.scratch-wiki.info/wiki/Computer_Colors
-		//https://stackoverflow.com/questions/2997656/how-can-i-use-the-hsl-colorspace-in-java
 		
-		Color cOld = new Color(myTurtle.getColor().toInt());
-		float[] RGBtoHSB = cOld.RGBtoHSB(cOld.getRed(), cOld.getGreen(), cOld.getBlue(), null);
-		float hue = RGBtoHSB[0];// 0.9f; //hue
-		float saturation = RGBtoHSB[1];//1.0f; //saturation
-		float brightness = RGBtoHSB[2];//0.8f; //brightness
+		//
+		JSONArray jColorParam = (JSONArray) inputs.get("COLOR_PARAM");
+		//"COLOR_PARAM": [1, "KqL.$BTJ:9Wrr]#Pf1iO"]
+		// TODO find the block 
+		//
+		JSONObject COLOR_PARAMBlock = getBlock(jColorParam.getString(1));
+		JSONObject fields = (JSONObject) COLOR_PARAMBlock.get("fields");
+		JSONArray jafieldsColorParam = (JSONArray) fields.get("colorParam");
+		String colorParmeName = jafieldsColorParam.getString(0);
+		/* "KqL.$BTJ:9Wrr]#Pf1iO": {
+                    "opcode": "pen_menu_colorParam",
+                    "next": null,
+                    "parent": "2)`yA8Y*+]#b6e8_1lvt",
+                    "inputs": {},
+                    "fields": {
+                        "colorParam": ["saturation", null]
+		
+		...
+		     "iMy~c{qmTs5Rne(MS@mC": {
+                    "opcode": "pen_menu_colorParam",
+                    "next": null,
+                    "parent": "M=C2spON36j)5u2O5!!I",
+                    "inputs": {},
+                    "fields": {
+                        "colorParam": ["brightness", null]
+                    },
+                    "shadow": true,
+                    "topLevel": false
+                },
+                    },*/
+		
+		final ColorRGB oldColorRGB = myTurtle.getColor();		
+		Color oColor = new Color(oldColorRGB.toInt());
+		float[] ftabHSB_oColor = Color.RGBtoHSB(oColor.getRed(), oColor.getGreen(), oColor.getBlue(), null);
+		float hue = ftabHSB_oColor[0];
+		float saturation = ftabHSB_oColor[1];
+		float brightness = ftabHSB_oColor[2];
 
-		//???
-		hue = hue + (float)(360.0/dColor);
-		
-		Color cTmp = Color.getHSBColor(hue, saturation, brightness);
+		// from javadoc RGBtoHSB : for Hue : The floor of this number is subtracted from it to create a fraction between 0 and 1. This fractional number is then multiplied by 360 to produce the hue angle in the HSB color model.
+		//float hueNew = hue + (float)(dColor/100.0f);//  
+		if ( "color".equals(colorParmeName)){
+		float hueNew = (float)((( hue * 100.0d ) + dColor ) /100.0d);
+		Color cTmp = Color.getHSBColor(hueNew, saturation, brightness);
+		final ColorRGB colorRGB = new ColorRGB(cTmp);
+		logger.debug("pen_changePenColorParamBy {} (Scratch3 Heu {} + {} -> {}) {}",oldColorRGB,hue*100,dColor,hueNew*100,colorRGB);
 		if ( !ignoredoChangePenColorParamBy )
-		myTurtle.setColor(new ColorRGB(cTmp));
-		// KO not rgb color .... // myTurtle.setColor(new ColorRGB((int)(myTurtle.getColor().toInt()+((int)dColor))));
+		myTurtle.setColor(colorRGB);		
+		}
+		if ( "brightness".equals(colorParmeName)){
+		float huebrightness = (float)((( brightness * 100.0f ) + dColor ) /100.0f);
+		if ( huebrightness < 0.0f) huebrightness = 0.0f;
+		Color cTmp = Color.getHSBColor(hue, saturation, huebrightness);
+		final ColorRGB colorRGB = new ColorRGB(cTmp);
+		logger.debug("pen_changePenColorParamBy {} (Scratch3 bri {} + {} -> {}) {}",oldColorRGB,brightness*100,dColor,huebrightness*100,colorRGB);
+		if ( !ignoredoChangePenColorParamBy )
+		myTurtle.setColor(colorRGB);		
+		}
+		if ( "saturation".equals(colorParmeName)){
+		float newsaturation = (float)((( saturation * 100.0d ) + dColor ) /100.0d);
+		if ( newsaturation < 0.0f) newsaturation = 0.0f;
+		Color cTmp = Color.getHSBColor(hue, newsaturation, brightness);
+		final ColorRGB colorRGB = new ColorRGB(cTmp);
+		logger.debug("pen_changePenColorParamBy {} (Scratch3 sat {} + {} -> {}) {}",oldColorRGB,saturation*100,dColor,newsaturation*100,colorRGB);
+		if ( !ignoredoChangePenColorParamBy )
+		myTurtle.setColor(colorRGB);		
+		}
+	}
+	
+	private void doSetChangeColorTo(JSONObject currentBlock) throws Exception {
+		logger.trace("pen_changePenColorParamTo COLOR");
+		JSONObject inputs = (JSONObject) currentBlock.get("inputs");
+		JSONArray jColor = (JSONArray) inputs.get("VALUE");
+		double dColor = resolveValue(jColor.get(1));
+		
+		//
+		JSONArray jColorParam = (JSONArray) inputs.get("COLOR_PARAM");
+		//"COLOR_PARAM": [1, "KqL.$BTJ:9Wrr]#Pf1iO"]
+		// TODO find the block 
+		//
+		JSONObject COLOR_PARAMBlock = getBlock(jColorParam.getString(1));
+		JSONObject fields = (JSONObject) COLOR_PARAMBlock.get("fields");
+		JSONArray jafieldsColorParam = (JSONArray) fields.get("colorParam");
+		String colorParmeName = jafieldsColorParam.getString(0);
+		/* "KqL.$BTJ:9Wrr]#Pf1iO": {
+                    "opcode": "pen_menu_colorParam",
+                    "next": null,
+                    "parent": "2)`yA8Y*+]#b6e8_1lvt",
+                    "inputs": {},
+                    "fields": {
+                        "colorParam": ["saturation", null]
+		
+		...
+		     "iMy~c{qmTs5Rne(MS@mC": {
+                    "opcode": "pen_menu_colorParam",
+                    "next": null,
+                    "parent": "M=C2spON36j)5u2O5!!I",
+                    "inputs": {},
+                    "fields": {
+                        "colorParam": ["brightness", null]
+                    },
+                    "shadow": true,
+                    "topLevel": false
+                },
+                    },*/
+		
+		final ColorRGB oldColorRGB = myTurtle.getColor();		
+		Color oColor = new Color(oldColorRGB.toInt());
+		float[] ftabHSB_oColor = Color.RGBtoHSB(oColor.getRed(), oColor.getGreen(), oColor.getBlue(), null);
+		float hue = ftabHSB_oColor[0];
+		float saturation = ftabHSB_oColor[1];
+		float brightness = ftabHSB_oColor[2];
+
+		// from javadoc RGBtoHSB : for Hue : The floor of this number is subtracted from it to create a fraction between 0 and 1. This fractional number is then multiplied by 360 to produce the hue angle in the HSB color model.
+		//float hueNew = hue + (float)(dColor/100.0f);//  
+		if ( "color".equals(colorParmeName)){
+		float hueNew = (float)(dColor/100.0d);
+		Color cTmp = Color.getHSBColor(hueNew, saturation, brightness);
+		final ColorRGB colorRGB = new ColorRGB(cTmp);
+		logger.debug("pen_changePenColorParamTo {} (Scratch3 Heu {}  -> {}) {}",oldColorRGB,hue*100,hueNew*100,colorRGB);
+		if ( !ignoredoChangePenColorParamBy )
+		myTurtle.setColor(colorRGB);		
+		}
+		if ( "brightness".equals(colorParmeName)){
+		float huebrightness = (float)(dColor  /100.0f);
+		Color cTmp = Color.getHSBColor(hue, saturation, huebrightness);
+		final ColorRGB colorRGB = new ColorRGB(cTmp);
+		logger.debug("pen_changePenColorParamTo {} (Scratch3 bri {}  -> {}) {}",oldColorRGB,brightness*100,huebrightness*100,colorRGB);
+		if ( !ignoredoChangePenColorParamBy )
+		myTurtle.setColor(colorRGB);		
+		}
+		if ( "saturation".equals(colorParmeName)){
+		float newsaturation = (float)(dColor  /100.0d);
+		Color cTmp = Color.getHSBColor(hue, newsaturation, brightness);
+		final ColorRGB colorRGB = new ColorRGB(cTmp);
+		logger.debug("pen_changePenColorParamTo {} (Scratch3 sat {} -> {}) {}",oldColorRGB,saturation*100,newsaturation*100,colorRGB);
+		if ( !ignoredoChangePenColorParamBy )
+		myTurtle.setColor(colorRGB);		
+		}
 	}
 	private void doSetPenHueToNumber(JSONObject currentBlock) throws Exception {
 		logger.debug("pen_setPenHueToNumber COLOR");
 		JSONObject inputs = (JSONObject) currentBlock.get("inputs");
 		JSONArray jColor = (JSONArray) inputs.get("HUE");
 		double dColor = resolveValue(jColor.get(1));
-		//??COLOR_PARAM = color ?
-		//?? HSB/HSV colors cf https://en.scratch-wiki.info/wiki/Computer_Colors
-		//https://stackoverflow.com/questions/2997656/how-can-i-use-the-hsl-colorspace-in-java
 		
-//		Color cOld = new Color(myTurtle.getColor().toInt());
-//		float[] RGBtoHSB = cOld.RGBtoHSB(cOld.getRed(), cOld.getGreen(), cOld.getBlue(), null);
-		float hue =(float)dColor ; //hue
-		float saturation = 0.84f; //saturation
-		float brightness = 0.5f; //brightness
+		final ColorRGB oldColorRGB = myTurtle.getColor();		
+		Color oColor = new Color(oldColorRGB.toInt());
+		float[] ftabHSB_oColor = Color.RGBtoHSB(oColor.getRed(), oColor.getGreen(), oColor.getBlue(), null);
+		float hue = ftabHSB_oColor[0];
+		float saturation = ftabHSB_oColor[1];
+		float brightness = ftabHSB_oColor[2];
 
-		Color cTmp = Color.getHSBColor(hue, saturation, brightness);
+		float newHue =(float)(dColor/100.0d) ;
+
+		Color cTmp = Color.getHSBColor(newHue, saturation, brightness);
 		if ( !ignoredoChangePenColorParamBy)
 		myTurtle.setColor(new ColorRGB(cTmp));
-		// KO not rgb color .... // myTurtle.setColor(new ColorRGB((int)(myTurtle.getColor().toInt()+((int)dColor))));
 	}
 	/**
 	 * Find and return currentBlock/fields/subKey/(first element). 
