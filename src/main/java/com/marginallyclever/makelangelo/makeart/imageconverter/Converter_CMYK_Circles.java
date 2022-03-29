@@ -4,6 +4,7 @@ import com.marginallyclever.convenience.Clipper2D;
 import com.marginallyclever.convenience.ColorRGB;
 import com.marginallyclever.convenience.Point2D;
 import com.marginallyclever.makelangelo.Translator;
+import com.marginallyclever.makelangelo.makeart.InfillTurtle;
 import com.marginallyclever.makelangelo.makeart.TransformedImage;
 import com.marginallyclever.makelangelo.makeart.imageFilter.Filter_CMYK;
 import com.marginallyclever.makelangelo.turtle.Turtle;
@@ -18,22 +19,20 @@ import java.beans.PropertyChangeEvent;
  */
 public class Converter_CMYK_Circles extends ImageConverter {
 	private static final Logger logger = LoggerFactory.getLogger(Converter_CMYK_Circles.class);
-	static protected int maxCircleSize =5;// passes value have to be >=1.
-	// Color values are from 0...255 inclusive.  255 is white, 0 is black.
-	// Lift the pen any time the color value is > cutoff
+	static protected int maxCircleRadius =5;
 	
 	@Override
 	public String getName() {
-		return Translator.get("ConverterCMYKCirclesName");
+		return Translator.get("Converter_CMYK_Circles.name");
 	}
 
 	@Override
 	public void propertyChange(PropertyChangeEvent evt) {
-		if(evt.getPropertyName().equals("maxCircleSize")) setMaxCircleSize((int)evt.getNewValue());
+		if(evt.getPropertyName().equals("Converter_CMYK_Circles.maxCircleSize")) setMaxCircleSize((int)evt.getNewValue());
 	}
 	
 	public int getMaxCircleSize() {
-		return maxCircleSize;
+		return maxCircleRadius;
 	}
 	
 	/**
@@ -41,7 +40,7 @@ public class Converter_CMYK_Circles extends ImageConverter {
 	 * @param value 
 	 */
 	public void setMaxCircleSize(int value) {
-		maxCircleSize = Math.max(1, value);
+		maxCircleRadius = Math.max(1, value);
 	}
 	
 	/**
@@ -75,13 +74,10 @@ public class Converter_CMYK_Circles extends ImageConverter {
 		double width   = myPaper.getMarginRight() - myPaper.getMarginLeft();
 		double maxLen  = Math.sqrt(width*width+height*height);
 
-		double [] error0 = new double[(int)Math.ceil(maxLen)];
-		double [] error1 = new double[(int)Math.ceil(maxLen)];
-		
 		double px,py,x0,y0,x1,y1,a;
 
 		int i=0;
-		for(a = -maxLen;a<maxLen;a+=maxCircleSize) {
+		for(a = -maxLen;a<maxLen;a+= maxCircleRadius) {
 			px = dx * a;
 			py = dy * a;
 			// p0-p1 is at a right angle to dx/dy
@@ -95,11 +91,6 @@ public class Converter_CMYK_Circles extends ImageConverter {
 				circlesAlongLine(x0,y0,x1,y1,cutoff,img);
 			} else {
 				circlesAlongLine(x1,y1,x0,y0,cutoff,img);
-			}
-			
-			for(int j=0;j<error0.length;++j) {
-				error0[j]=error1[error0.length-1-j];
-				error1[error0.length-1-j]=0;
 			}
 			++i;
 		}
@@ -121,33 +112,45 @@ public class Converter_CMYK_Circles extends ImageConverter {
 
 		double dx=P1.x-P0.x;
 		double dy=P1.y-P0.y;
-		double halfStep = maxCircleSize/2.0;
+		double halfStep = maxCircleRadius;
 		double distance = Math.sqrt(dx*dx+dy*dy);
 
 		double n,x,y,v;
 
 		double b;
-		for( b = 0; b <= distance; b+=maxCircleSize ) {
+		for( b = 0; b <= distance; b+= maxCircleRadius*2) {
 			n = b / distance;
 			x = dx * n + P0.x;
 			y = dy * n + P0.y;
 
 			v = img.sample( x - halfStep, y - halfStep, x + halfStep, y + halfStep);
 
-			if(v<cutoff) {
-				drawCircle(x,y,maxCircleSize * (v/255.0));
-			}
+			drawCircle(x, y, maxCircleRadius * ((255.0-v)/255.0));
 		}
 	}
 
 	private void drawCircle(double x,double y,double r) {
 		double circumference = Math.ceil(Math.PI*r*2.0);
-		turtle.jumpTo(x+r,y+0);
+		Turtle t = new Turtle();
+		t.history.clear();
+		t.setColor(turtle.getColor());
+		t.jumpTo(x+r,y+0);
 		for(int i=0;i<circumference;++i) {
 			double v = 2.0*Math.PI * (double)i/circumference;
-			turtle.moveTo(
+			t.moveTo(
 					x+Math.cos(v)*r,
 					y+Math.sin(v)*r);
 		}
+		t.moveTo(x+r,y+0);
+
+		try {
+			InfillTurtle filler = new InfillTurtle();
+			Turtle t2 = filler.run(t);
+			turtle.add(t2);
+		} catch(Exception e) {
+			// shape was not closed, do nothing.
+		}
+
+		turtle.add(t);
 	}
 }

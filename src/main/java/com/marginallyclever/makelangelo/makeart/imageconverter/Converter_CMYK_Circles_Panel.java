@@ -9,7 +9,7 @@ public class Converter_CMYK_Circles_Panel extends ImageConverterPanel {
 
 	public Converter_CMYK_Circles_Panel(Converter_CMYK_Circles converter) {
 		super(converter);
-		add(new SelectSlider("maxCircleSize", Translator.get("maxCircleSize"), 25, 3, converter.getMaxCircleSize()));
+		add(new SelectSlider("maxCircleSize", Translator.get("Converter_CMYK_Circles.maxCircleSize"), 15, 1, converter.getMaxCircleSize()));
 		add(new SelectReadOnlyText("note",Translator.get("ConverterCMYKNote")));
 	}
 }
